@@ -4,21 +4,10 @@
 
 import * as os from "node:os";
 import * as path from "node:path";
-import {
-  ensureImage,
-  isDockerAvailable,
-  runContainer,
-} from "../../docker/client";
+import { ensureImage, isDockerAvailable, runContainer } from "../../docker/client";
 import { inferProjectName, resolveServiceVolumes } from "../../docker/compose";
-import {
-  getRunningContainersUsingVolume,
-  isVolumeInUse,
-  volumeExists,
-} from "../../docker/volume";
-import type {
-  VolumeBackupResult,
-  VolumeBackupsResult,
-} from "../../types/backup";
+import { getRunningContainersUsingVolume, isVolumeInUse, volumeExists } from "../../docker/volume";
+import type { VolumeBackupResult, VolumeBackupsResult } from "../../types/backup";
 import type { DockerConfig, DockerVolumeSource } from "../../types/config";
 import { computeFileChecksum } from "../../utils/crypto";
 import { logger } from "../../utils/logger";
@@ -28,11 +17,7 @@ const BACKUP_IMAGE = "alpine:latest";
 /**
  * Generate archive name for a volume backup
  */
-function generateVolumeArchiveName(
-  volumeName: string,
-  schedule: string,
-  prefix: string,
-): string {
+function generateVolumeArchiveName(volumeName: string, schedule: string, prefix: string): string {
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
   // Sanitize volume name for use in filename
   const sanitizedName = volumeName.replace(/[^a-zA-Z0-9_-]/g, "_");
@@ -86,9 +71,7 @@ export async function backupVolume(
   });
 
   if (!result.success) {
-    throw new Error(
-      `Failed to backup volume ${volumeName}: ${result.stderr || result.stdout}`,
-    );
+    throw new Error(`Failed to backup volume ${volumeName}: ${result.stderr || result.stdout}`);
   }
 
   const archivePath = path.join(outputDir, archiveName);
@@ -100,9 +83,7 @@ export async function backupVolume(
   // Compute checksum
   const checksum = await computeFileChecksum(archivePath);
 
-  logger.info(
-    `Volume ${volumeName} backed up: ${archiveName} (${sizeBytes} bytes)`,
-  );
+  logger.info(`Volume ${volumeName} backed up: ${archiveName} (${sizeBytes} bytes)`);
 
   return {
     volumeName,
@@ -118,21 +99,14 @@ export async function backupVolume(
 /**
  * Resolve volume sources to actual Docker volume names
  */
-export async function resolveVolumeNames(
-  sources: DockerVolumeSource[],
-): Promise<string[]> {
+export async function resolveVolumeNames(sources: DockerVolumeSource[]): Promise<string[]> {
   const volumeNames: string[] = [];
 
   for (const source of sources) {
     if (source.type === "compose" && source.composePath) {
       // Resolve volumes from docker-compose.yml
-      const projectName =
-        source.projectName || inferProjectName(source.composePath);
-      const resolved = await resolveServiceVolumes(
-        source.composePath,
-        source.name,
-        projectName,
-      );
+      const projectName = source.projectName || inferProjectName(source.composePath);
+      const resolved = await resolveServiceVolumes(source.composePath, source.name, projectName);
       volumeNames.push(...resolved);
     } else {
       // Direct volume name
@@ -190,12 +164,7 @@ export async function backupAllVolumes(
   try {
     for (const volumeName of volumeNames) {
       try {
-        const result = await backupVolume(
-          volumeName,
-          tempDir,
-          schedule,
-          prefix,
-        );
+        const result = await backupVolume(volumeName, tempDir, schedule, prefix);
         results.push(result);
         totalSizeBytes += result.sizeBytes;
         if (result.wasInUse) {
@@ -222,9 +191,7 @@ export async function backupAllVolumes(
 /**
  * Cleanup temporary volume backup files
  */
-export async function cleanupVolumeBackups(
-  results: VolumeBackupsResult,
-): Promise<void> {
+export async function cleanupVolumeBackups(results: VolumeBackupsResult): Promise<void> {
   for (const volume of results.volumes) {
     try {
       await Bun.$`rm -f ${volume.archivePath}`.quiet();

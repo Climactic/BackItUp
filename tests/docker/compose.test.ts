@@ -60,9 +60,7 @@ volumes:
     });
 
     test("returns null for non-existent file", async () => {
-      const result = await parseComposeFile(
-        path.join(tempDir, "nonexistent.yml"),
-      );
+      const result = await parseComposeFile(path.join(tempDir, "nonexistent.yml"));
       expect(result).toBeNull();
     });
 
@@ -106,9 +104,7 @@ services:
 `,
       );
 
-      const composeFile = assertComposeFile(
-        await parseComposeFile(composePath),
-      );
+      const composeFile = assertComposeFile(await parseComposeFile(composePath));
 
       const volumes = getServiceVolumes(composeFile, "app");
 
@@ -142,9 +138,7 @@ services:
 `,
       );
 
-      const composeFile = assertComposeFile(
-        await parseComposeFile(composePath),
-      );
+      const composeFile = assertComposeFile(await parseComposeFile(composePath));
       const volumes = getServiceVolumes(composeFile, "app");
 
       expect(volumes).toHaveLength(2);
@@ -171,9 +165,7 @@ services:
 `,
       );
 
-      const composeFile = assertComposeFile(
-        await parseComposeFile(composePath),
-      );
+      const composeFile = assertComposeFile(await parseComposeFile(composePath));
       const volumes = getServiceVolumes(composeFile, "app");
 
       expect(volumes).toHaveLength(1);
@@ -197,9 +189,7 @@ services:
 `,
       );
 
-      const composeFile = assertComposeFile(
-        await parseComposeFile(composePath),
-      );
+      const composeFile = assertComposeFile(await parseComposeFile(composePath));
       const volumes = getServiceVolumes(composeFile, "app");
 
       expect(volumes).toEqual([]);
@@ -217,9 +207,7 @@ services:
 `,
       );
 
-      const composeFile = assertComposeFile(
-        await parseComposeFile(composePath),
-      );
+      const composeFile = assertComposeFile(await parseComposeFile(composePath));
       const volumes = getServiceVolumes(composeFile, "nonexistent");
 
       expect(volumes).toEqual([]);
@@ -244,9 +232,7 @@ services:
 `,
       );
 
-      const composeFile = assertComposeFile(
-        await parseComposeFile(composePath),
-      );
+      const composeFile = assertComposeFile(await parseComposeFile(composePath));
       const namedVolumes = getServiceNamedVolumes(composeFile, "app");
 
       expect(namedVolumes).toEqual(["app_data", "cache"]);
@@ -270,9 +256,7 @@ volumes:
 `,
       );
 
-      const composeFile = assertComposeFile(
-        await parseComposeFile(composePath),
-      );
+      const composeFile = assertComposeFile(await parseComposeFile(composePath));
       const volumes = getComposeVolumes(composeFile);
 
       expect(volumes).toEqual(["data", "cache", "logs"]);
@@ -290,9 +274,7 @@ services:
 `,
       );
 
-      const composeFile = assertComposeFile(
-        await parseComposeFile(composePath),
-      );
+      const composeFile = assertComposeFile(await parseComposeFile(composePath));
       const volumes = getComposeVolumes(composeFile);
 
       expect(volumes).toEqual([]);
@@ -301,25 +283,17 @@ services:
 
   describe("inferProjectName", () => {
     test("extracts directory name from path", () => {
-      expect(inferProjectName("/home/user/myproject/docker-compose.yml")).toBe(
-        "myproject",
-      );
+      expect(inferProjectName("/home/user/myproject/docker-compose.yml")).toBe("myproject");
       expect(inferProjectName("/var/www/webapp/compose.yml")).toBe("webapp");
     });
 
     test("converts to lowercase", () => {
-      expect(inferProjectName("/home/user/MyProject/docker-compose.yml")).toBe(
-        "myproject",
-      );
+      expect(inferProjectName("/home/user/MyProject/docker-compose.yml")).toBe("myproject");
     });
 
     test("removes special characters", () => {
-      expect(
-        inferProjectName("/home/user/my-project_v2/docker-compose.yml"),
-      ).toBe("myprojectv2");
-      expect(inferProjectName("/home/user/my.project/docker-compose.yml")).toBe(
-        "myproject",
-      );
+      expect(inferProjectName("/home/user/my-project_v2/docker-compose.yml")).toBe("myprojectv2");
+      expect(inferProjectName("/home/user/my.project/docker-compose.yml")).toBe("myproject");
     });
 
     test("handles edge cases", () => {

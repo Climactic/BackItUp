@@ -46,9 +46,7 @@ interface ComposeVolumeDefinition {
 /**
  * Parse a docker-compose.yml file
  */
-export async function parseComposeFile(
-  composePath: string,
-): Promise<ComposeFile | null> {
+export async function parseComposeFile(composePath: string): Promise<ComposeFile | null> {
   try {
     const file = Bun.file(composePath);
     const content = await file.text();
@@ -70,9 +68,7 @@ export async function parseComposeFile(
  * Parse a volume mount string (short syntax)
  * Formats: "volume_name:/path" or "./host/path:/path" or "/host/path:/path"
  */
-function parseVolumeShortSyntax(
-  volumeString: string,
-): ComposeVolumeMount | null {
+function parseVolumeShortSyntax(volumeString: string): ComposeVolumeMount | null {
   const parts = volumeString.split(":");
 
   if (parts.length < 2) {
@@ -84,8 +80,7 @@ function parseVolumeShortSyntax(
   const options = parts[2] || "";
 
   // Determine if this is a named volume or a bind mount
-  const isBindMount =
-    source.startsWith("./") || source.startsWith("/") || source.startsWith("~");
+  const isBindMount = source.startsWith("./") || source.startsWith("/") || source.startsWith("~");
 
   return {
     source,
@@ -134,14 +129,9 @@ export function getServiceVolumes(
 /**
  * Get named volumes used by a service (excludes bind mounts)
  */
-export function getServiceNamedVolumes(
-  composeFile: ComposeFile,
-  serviceName: string,
-): string[] {
+export function getServiceNamedVolumes(composeFile: ComposeFile, serviceName: string): string[] {
   const mounts = getServiceVolumes(composeFile, serviceName);
-  return mounts
-    .filter((m) => m.type === "volume" && m.source)
-    .map((m) => m.source);
+  return mounts.filter((m) => m.type === "volume" && m.source).map((m) => m.source);
 }
 
 /**
@@ -179,9 +169,7 @@ export async function resolveComposeVolumeName(
     }
   }
 
-  logger.warn(
-    `Could not resolve Docker volume for compose volume: ${volumeName}`,
-  );
+  logger.warn(`Could not resolve Docker volume for compose volume: ${volumeName}`);
   return null;
 }
 
@@ -203,11 +191,7 @@ export async function resolveServiceVolumes(
   const resolved: string[] = [];
 
   for (const volumeName of namedVolumes) {
-    const dockerVolumeName = await resolveComposeVolumeName(
-      volumeName,
-      composeFile,
-      projectName,
-    );
+    const dockerVolumeName = await resolveComposeVolumeName(volumeName, composeFile, projectName);
 
     if (dockerVolumeName) {
       resolved.push(dockerVolumeName);

@@ -41,9 +41,7 @@ describe("migrations", () => {
       const migrations = getAllMigrations();
 
       for (let i = 1; i < migrations.length; i++) {
-        expect(migrations[i]!.version).toBeGreaterThan(
-          migrations[i - 1]!.version,
-        );
+        expect(migrations[i]!.version).toBeGreaterThan(migrations[i - 1]!.version);
       }
     });
 
@@ -137,9 +135,7 @@ describe("migrations", () => {
       initializeDatabase(db);
 
       const tables = db
-        .query(
-          "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name",
-        )
+        .query("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
         .all() as { name: string }[];
       const tableNames = tables.map((t) => t.name);
 
@@ -162,9 +158,9 @@ describe("migrations", () => {
 
       initializeDatabase(db);
 
-      const indexes = db
-        .query("SELECT name FROM sqlite_master WHERE type='index'")
-        .all() as { name: string }[];
+      const indexes = db.query("SELECT name FROM sqlite_master WHERE type='index'").all() as {
+        name: string;
+      }[];
       const indexNames = indexes.map((i) => i.name);
 
       expect(indexNames).toContain("idx_backups_schedule_created");

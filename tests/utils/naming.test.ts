@@ -79,9 +79,7 @@ describe("naming utilities", () => {
 
   describe("parseArchiveName", () => {
     test("parses valid archive name", () => {
-      const result = parseArchiveName(
-        "backitup_app_daily_2024-01-15_143022_abc123.tar.gz",
-      );
+      const result = parseArchiveName("backitup_app_daily_2024-01-15_143022_abc123.tar.gz");
       expect(result).toEqual({
         prefix: "backitup",
         sources: "app",
@@ -107,9 +105,7 @@ describe("naming utilities", () => {
     });
 
     test("parses archive name with 'all' sources", () => {
-      const result = parseArchiveName(
-        "backitup_all_weekly_2024-01-15_143022_abc123.tar.gz",
-      );
+      const result = parseArchiveName("backitup_all_weekly_2024-01-15_143022_abc123.tar.gz");
       expect(result?.sources).toBe("all");
     });
 
@@ -121,9 +117,7 @@ describe("naming utilities", () => {
     });
 
     test("returns null for wrong extension", () => {
-      expect(
-        parseArchiveName("backitup_app_daily_2024-01-15_143022_abc123.zip"),
-      ).toBeNull();
+      expect(parseArchiveName("backitup_app_daily_2024-01-15_143022_abc123.zip")).toBeNull();
     });
 
     test("roundtrips with generateArchiveName", () => {
@@ -138,30 +132,16 @@ describe("naming utilities", () => {
 
   describe("isValidArchiveName", () => {
     test("validates correct archive names", () => {
-      expect(
-        isValidArchiveName(
-          "backitup_app_daily_2024-01-15_143022_abc123.tar.gz",
-        ),
-      ).toBe(true);
-      expect(
-        isValidArchiveName(
-          "backitup_all_hourly_2024-12-31_235959_xyz789.tar.gz",
-        ),
-      ).toBe(true);
+      expect(isValidArchiveName("backitup_app_daily_2024-01-15_143022_abc123.tar.gz")).toBe(true);
+      expect(isValidArchiveName("backitup_all_hourly_2024-12-31_235959_xyz789.tar.gz")).toBe(true);
     });
 
     test("validates with custom prefix", () => {
+      expect(isValidArchiveName("myapp_app_daily_2024-01-15_143022_abc123.tar.gz", "myapp")).toBe(
+        true,
+      );
       expect(
-        isValidArchiveName(
-          "myapp_app_daily_2024-01-15_143022_abc123.tar.gz",
-          "myapp",
-        ),
-      ).toBe(true);
-      expect(
-        isValidArchiveName(
-          "myapp_app_daily_2024-01-15_143022_abc123.tar.gz",
-          "backitup",
-        ),
+        isValidArchiveName("myapp_app_daily_2024-01-15_143022_abc123.tar.gz", "backitup"),
       ).toBe(false);
     });
 
@@ -172,47 +152,33 @@ describe("naming utilities", () => {
     });
 
     test("rejects names with wrong prefix", () => {
-      expect(
-        isValidArchiveName("wrong_app_daily_2024-01-15_143022_abc123.tar.gz"),
-      ).toBe(false);
+      expect(isValidArchiveName("wrong_app_daily_2024-01-15_143022_abc123.tar.gz")).toBe(false);
     });
   });
 
   describe("ARCHIVE_NAME_PATTERN", () => {
     test("matches valid patterns", () => {
+      expect(ARCHIVE_NAME_PATTERN.test("backitup_app_daily_2024-01-15_143022_abc123.tar.gz")).toBe(
+        true,
+      );
       expect(
-        ARCHIVE_NAME_PATTERN.test(
-          "backitup_app_daily_2024-01-15_143022_abc123.tar.gz",
-        ),
+        ARCHIVE_NAME_PATTERN.test("backitup_app-db_hourly_2024-01-15_143022_abc123.tar.gz"),
       ).toBe(true);
-      expect(
-        ARCHIVE_NAME_PATTERN.test(
-          "backitup_app-db_hourly_2024-01-15_143022_abc123.tar.gz",
-        ),
-      ).toBe(true);
-      expect(
-        ARCHIVE_NAME_PATTERN.test(
-          "myapp_all_weekly_2024-12-31_000000_000000.tar.gz",
-        ),
-      ).toBe(true);
+      expect(ARCHIVE_NAME_PATTERN.test("myapp_all_weekly_2024-12-31_000000_000000.tar.gz")).toBe(
+        true,
+      );
     });
 
     test("rejects invalid patterns", () => {
-      expect(
-        ARCHIVE_NAME_PATTERN.test(
-          "Backitup_app_daily_2024-01-15_143022_abc123.tar.gz",
-        ),
-      ).toBe(false); // uppercase
-      expect(
-        ARCHIVE_NAME_PATTERN.test(
-          "backitup_App_daily_2024-01-15_143022_abc123.tar.gz",
-        ),
-      ).toBe(false); // uppercase source
-      expect(
-        ARCHIVE_NAME_PATTERN.test(
-          "backitup_app_Daily_2024-01-15_143022_abc123.tar.gz",
-        ),
-      ).toBe(false); // uppercase schedule
+      expect(ARCHIVE_NAME_PATTERN.test("Backitup_app_daily_2024-01-15_143022_abc123.tar.gz")).toBe(
+        false,
+      ); // uppercase
+      expect(ARCHIVE_NAME_PATTERN.test("backitup_App_daily_2024-01-15_143022_abc123.tar.gz")).toBe(
+        false,
+      ); // uppercase source
+      expect(ARCHIVE_NAME_PATTERN.test("backitup_app_Daily_2024-01-15_143022_abc123.tar.gz")).toBe(
+        false,
+      ); // uppercase schedule
     });
   });
 
@@ -295,9 +261,7 @@ describe("naming utilities", () => {
     test("rejects invalid volume archive names", () => {
       // Wrong format
       expect(
-        VOLUME_ARCHIVE_NAME_PATTERN.test(
-          "backitup_app_daily_2024-01-15_143022_abc123.tar.gz",
-        ),
+        VOLUME_ARCHIVE_NAME_PATTERN.test("backitup_app_daily_2024-01-15_143022_abc123.tar.gz"),
       ).toBe(false);
       // Missing volume marker
       expect(
@@ -307,9 +271,7 @@ describe("naming utilities", () => {
       ).toBe(false);
       // Wrong extension
       expect(
-        VOLUME_ARCHIVE_NAME_PATTERN.test(
-          "backitup-volume-data-daily-2024-01-15T14-30-22-123Z.zip",
-        ),
+        VOLUME_ARCHIVE_NAME_PATTERN.test("backitup-volume-data-daily-2024-01-15T14-30-22-123Z.zip"),
       ).toBe(false);
     });
   });
@@ -342,9 +304,7 @@ describe("naming utilities", () => {
     });
 
     test("returns null for file archive names", () => {
-      const result = parseVolumeArchiveName(
-        "backitup_app_daily_2024-01-15_143022_abc123.tar.gz",
-      );
+      const result = parseVolumeArchiveName("backitup_app_daily_2024-01-15_143022_abc123.tar.gz");
       expect(result).toBeNull();
     });
 
@@ -357,18 +317,12 @@ describe("naming utilities", () => {
   describe("isVolumeArchiveName", () => {
     test("returns true for volume archive names", () => {
       expect(
-        isVolumeArchiveName(
-          "backitup-volume-data-daily-2024-01-15T14-30-22-123Z.tar.gz",
-        ),
+        isVolumeArchiveName("backitup-volume-data-daily-2024-01-15T14-30-22-123Z.tar.gz"),
       ).toBe(true);
     });
 
     test("returns false for file archive names", () => {
-      expect(
-        isVolumeArchiveName(
-          "backitup_app_daily_2024-01-15_143022_abc123.tar.gz",
-        ),
-      ).toBe(false);
+      expect(isVolumeArchiveName("backitup_app_daily_2024-01-15_143022_abc123.tar.gz")).toBe(false);
     });
 
     test("returns false for invalid names", () => {
@@ -379,33 +333,21 @@ describe("naming utilities", () => {
   describe("isValidArchiveName with volumes", () => {
     test("validates both file and volume archive names", () => {
       // File archive
-      expect(
-        isValidArchiveName(
-          "backitup_app_daily_2024-01-15_143022_abc123.tar.gz",
-        ),
-      ).toBe(true);
+      expect(isValidArchiveName("backitup_app_daily_2024-01-15_143022_abc123.tar.gz")).toBe(true);
 
       // Volume archive
-      expect(
-        isValidArchiveName(
-          "backitup-volume-data-daily-2024-01-15T14-30-22-123Z.tar.gz",
-        ),
-      ).toBe(true);
+      expect(isValidArchiveName("backitup-volume-data-daily-2024-01-15T14-30-22-123Z.tar.gz")).toBe(
+        true,
+      );
     });
 
     test("validates volume archives with custom prefix", () => {
       expect(
-        isValidArchiveName(
-          "myapp-volume-data-daily-2024-01-15T14-30-22-123Z.tar.gz",
-          "myapp",
-        ),
+        isValidArchiveName("myapp-volume-data-daily-2024-01-15T14-30-22-123Z.tar.gz", "myapp"),
       ).toBe(true);
 
       expect(
-        isValidArchiveName(
-          "myapp-volume-data-daily-2024-01-15T14-30-22-123Z.tar.gz",
-          "backitup",
-        ),
+        isValidArchiveName("myapp-volume-data-daily-2024-01-15T14-30-22-123Z.tar.gz", "backitup"),
       ).toBe(false);
     });
 

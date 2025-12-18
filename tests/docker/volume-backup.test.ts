@@ -1,8 +1,5 @@
 import { describe, expect, mock, test } from "bun:test";
-import type {
-  VolumeBackupResult,
-  VolumeBackupsResult,
-} from "../../src/types/backup";
+import type { VolumeBackupResult, VolumeBackupsResult } from "../../src/types/backup";
 import type { DockerConfig, DockerVolumeSource } from "../../src/types/config";
 
 describe("volume backup", () => {
@@ -12,8 +9,7 @@ describe("volume backup", () => {
         volumeName: "postgres_data",
         archivePath:
           "/tmp/backup/backitup-volume-postgres_data-daily-2024-01-15T14-30-22-123Z.tar.gz",
-        archiveName:
-          "backitup-volume-postgres_data-daily-2024-01-15T14-30-22-123Z.tar.gz",
+        archiveName: "backitup-volume-postgres_data-daily-2024-01-15T14-30-22-123Z.tar.gz",
         sizeBytes: 1024 * 1024 * 50, // 50 MB
         checksum: "abc123def456",
         wasInUse: false,
@@ -156,9 +152,7 @@ describe("volume backup", () => {
 describe("volume backup mocked behavior", () => {
   test("resolveVolumeNames handles direct volumes", async () => {
     const mockResolve = mock((sources: DockerVolumeSource[]) => {
-      return Promise.resolve(
-        sources.filter((s) => s.type !== "compose").map((s) => s.name),
-      );
+      return Promise.resolve(sources.filter((s) => s.type !== "compose").map((s) => s.name));
     });
 
     const sources: DockerVolumeSource[] = [{ name: "vol1" }, { name: "vol2" }];
@@ -187,33 +181,31 @@ describe("volume backup mocked behavior", () => {
   });
 
   test("backupAllVolumes aggregates results", async () => {
-    const mockBackupAll = mock(
-      (config: DockerConfig): Promise<VolumeBackupsResult> => {
-        if (!config.enabled || config.volumes.length === 0) {
-          return Promise.resolve({
-            volumes: [],
-            totalSizeBytes: 0,
-            volumesInUseCount: 0,
-          });
-        }
-
-        const volumes = config.volumes.map((v, i) => ({
-          volumeName: v.name,
-          archivePath: `/tmp/${v.name}.tar.gz`,
-          archiveName: `${v.name}.tar.gz`,
-          sizeBytes: 1000 * (i + 1),
-          checksum: `hash${i}`,
-          wasInUse: i === 0,
-          containersUsingVolume: i === 0 ? ["container1"] : [],
-        }));
-
+    const mockBackupAll = mock((config: DockerConfig): Promise<VolumeBackupsResult> => {
+      if (!config.enabled || config.volumes.length === 0) {
         return Promise.resolve({
-          volumes,
-          totalSizeBytes: volumes.reduce((sum, v) => sum + v.sizeBytes, 0),
-          volumesInUseCount: volumes.filter((v) => v.wasInUse).length,
+          volumes: [],
+          totalSizeBytes: 0,
+          volumesInUseCount: 0,
         });
-      },
-    );
+      }
+
+      const volumes = config.volumes.map((v, i) => ({
+        volumeName: v.name,
+        archivePath: `/tmp/${v.name}.tar.gz`,
+        archiveName: `${v.name}.tar.gz`,
+        sizeBytes: 1000 * (i + 1),
+        checksum: `hash${i}`,
+        wasInUse: i === 0,
+        containersUsingVolume: i === 0 ? ["container1"] : [],
+      }));
+
+      return Promise.resolve({
+        volumes,
+        totalSizeBytes: volumes.reduce((sum, v) => sum + v.sizeBytes, 0),
+        volumesInUseCount: volumes.filter((v) => v.wasInUse).length,
+      });
+    });
 
     const config: DockerConfig = {
       enabled: true,
@@ -227,22 +219,20 @@ describe("volume backup mocked behavior", () => {
   });
 
   test("backupAllVolumes returns empty when disabled", async () => {
-    const mockBackupAll = mock(
-      (config: DockerConfig): Promise<VolumeBackupsResult> => {
-        if (!config.enabled) {
-          return Promise.resolve({
-            volumes: [],
-            totalSizeBytes: 0,
-            volumesInUseCount: 0,
-          });
-        }
+    const mockBackupAll = mock((config: DockerConfig): Promise<VolumeBackupsResult> => {
+      if (!config.enabled) {
         return Promise.resolve({
           volumes: [],
           totalSizeBytes: 0,
           volumesInUseCount: 0,
         });
-      },
-    );
+      }
+      return Promise.resolve({
+        volumes: [],
+        totalSizeBytes: 0,
+        volumesInUseCount: 0,
+      });
+    });
 
     const config: DockerConfig = {
       enabled: false,

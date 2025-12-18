@@ -3,11 +3,7 @@
  */
 
 import { getBackupById } from "../../db";
-import {
-  getLocalFileChecksum,
-  isPathWithinDir,
-  localFileExists,
-} from "../../storage/local";
+import { getLocalFileChecksum, isPathWithinDir, localFileExists } from "../../storage/local";
 import { isKeyWithinPrefix, s3ObjectExists } from "../../storage/s3";
 import type { BackitupConfig, BackupRecord } from "../../types";
 import { isValidArchiveName } from "../../utils/naming";
@@ -32,9 +28,7 @@ export async function validateDeletionCandidate(
   // CHECK 1: Verify backup exists in our database (re-fetch to be sure)
   const dbRecord = getBackupById(backup.backup_id);
   if (!dbRecord) {
-    errors.push(
-      `Backup ${backup.backup_id} not found in database - REFUSING TO DELETE`,
-    );
+    errors.push(`Backup ${backup.backup_id} not found in database - REFUSING TO DELETE`);
     return { valid: false, errors, warnings };
   }
 
@@ -59,9 +53,7 @@ export async function validateDeletionCandidate(
     // CHECK 4: Verify local file exists
     const exists = await localFileExists(backup.local_path);
     if (!exists) {
-      warnings.push(
-        `Local file not found (already deleted?): ${backup.local_path}`,
-      );
+      warnings.push(`Local file not found (already deleted?): ${backup.local_path}`);
     } else if (config.safety?.verifyChecksumBeforeDelete) {
       // CHECK 5: Verify checksum matches
       const actualChecksum = await getLocalFileChecksum(backup.local_path);

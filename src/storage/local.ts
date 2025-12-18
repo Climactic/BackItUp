@@ -4,12 +4,7 @@
 
 import * as path from "node:path";
 import { $ } from "bun";
-import type {
-  IStorageProvider,
-  LocalStorageConfig,
-  SaveResult,
-  StorageLocation,
-} from "../types";
+import type { IStorageProvider, LocalStorageConfig, SaveResult, StorageLocation } from "../types";
 import { computeFileChecksum } from "../utils/crypto";
 import { logger } from "../utils/logger";
 
@@ -103,9 +98,7 @@ export async function localFileExists(filePath: string): Promise<boolean> {
   return await file.exists();
 }
 
-export async function getLocalFileChecksum(
-  filePath: string,
-): Promise<string | null> {
+export async function getLocalFileChecksum(filePath: string): Promise<string | null> {
   const file = Bun.file(filePath);
   if (!(await file.exists())) return null;
   return computeFileChecksum(filePath);

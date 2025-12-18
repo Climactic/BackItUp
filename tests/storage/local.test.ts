@@ -162,9 +162,7 @@ describe("local storage", () => {
 
       const checksum = await getLocalFileChecksum(filePath);
 
-      expect(checksum).toBe(
-        "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9",
-      );
+      expect(checksum).toBe("b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9");
     });
 
     test("returns null for non-existent file", async () => {
@@ -188,29 +186,19 @@ describe("local storage", () => {
 
   describe("isPathWithinDir", () => {
     test("returns true for file within directory", () => {
-      expect(isPathWithinDir("/backup/archives/file.tar.gz", "/backup")).toBe(
-        true,
-      );
-      expect(isPathWithinDir("/backup/archives/file.tar.gz", "/backup/")).toBe(
-        true,
-      );
-      expect(
-        isPathWithinDir("/backup/archives/file.tar.gz", "/backup/archives"),
-      ).toBe(true);
+      expect(isPathWithinDir("/backup/archives/file.tar.gz", "/backup")).toBe(true);
+      expect(isPathWithinDir("/backup/archives/file.tar.gz", "/backup/")).toBe(true);
+      expect(isPathWithinDir("/backup/archives/file.tar.gz", "/backup/archives")).toBe(true);
     });
 
     test("returns false for file outside directory", () => {
       expect(isPathWithinDir("/other/file.tar.gz", "/backup")).toBe(false);
-      expect(isPathWithinDir("/backup-other/file.tar.gz", "/backup")).toBe(
-        false,
-      );
+      expect(isPathWithinDir("/backup-other/file.tar.gz", "/backup")).toBe(false);
     });
 
     test("returns false for path traversal attempts", () => {
       expect(isPathWithinDir("/backup/../etc/passwd", "/backup")).toBe(false);
-      expect(
-        isPathWithinDir("/backup/archives/../../etc/passwd", "/backup"),
-      ).toBe(false);
+      expect(isPathWithinDir("/backup/archives/../../etc/passwd", "/backup")).toBe(false);
     });
 
     test("returns true for exact directory match", () => {

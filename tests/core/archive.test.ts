@@ -2,11 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import * as os from "node:os";
 import * as path from "node:path";
 import { $ } from "bun";
-import {
-  cleanupTempArchive,
-  collectFiles,
-  createArchive,
-} from "../../src/core";
+import { cleanupTempArchive, collectFiles, createArchive } from "../../src/core";
 import type { SourceConfig } from "../../src/types";
 
 describe("archive", () => {
@@ -22,18 +18,12 @@ describe("archive", () => {
     await $`mkdir -p ${sourceDir}/subdir`;
     await Bun.write(path.join(sourceDir, "file1.txt"), "content 1");
     await Bun.write(path.join(sourceDir, "file2.js"), "const x = 1;");
-    await Bun.write(
-      path.join(sourceDir, "subdir/nested.txt"),
-      "nested content",
-    );
+    await Bun.write(path.join(sourceDir, "subdir/nested.txt"), "nested content");
     await Bun.write(path.join(sourceDir, ".hidden"), "hidden file");
 
     // Create node_modules to test exclusion
     await $`mkdir -p ${sourceDir}/node_modules/package`;
-    await Bun.write(
-      path.join(sourceDir, "node_modules/package/index.js"),
-      "module",
-    );
+    await Bun.write(path.join(sourceDir, "node_modules/package/index.js"), "module");
   });
 
   afterAll(async () => {
@@ -50,9 +40,7 @@ describe("archive", () => {
     });
 
     test("collects files matching specific patterns", async () => {
-      const sources: SourceConfig[] = [
-        { path: sourceDir, patterns: ["**/*.txt"] },
-      ];
+      const sources: SourceConfig[] = [{ path: sourceDir, patterns: ["**/*.txt"] }];
       const { files } = await collectFiles(sources);
 
       const txtFiles = files.filter((f) => f.absolutePath.endsWith(".txt"));
@@ -65,9 +53,7 @@ describe("archive", () => {
       ];
       const { files } = await collectFiles(sources);
 
-      const nodeModulesFiles = files.filter((f) =>
-        f.absolutePath.includes("node_modules"),
-      );
+      const nodeModulesFiles = files.filter((f) => f.absolutePath.includes("node_modules"));
       expect(nodeModulesFiles.length).toBe(0);
     });
 
@@ -88,9 +74,7 @@ describe("archive", () => {
     });
 
     test("returns empty for non-existent source", async () => {
-      const sources: SourceConfig[] = [
-        { path: path.join(tempDir, "nonexistent") },
-      ];
+      const sources: SourceConfig[] = [{ path: path.join(tempDir, "nonexistent") }];
       const { files } = await collectFiles(sources);
 
       expect(files.length).toBe(0);
@@ -101,17 +85,13 @@ describe("archive", () => {
       const { files } = await collectFiles(sources);
 
       const sourceName = path.basename(sourceDir);
-      const prefixedFiles = files.filter((f) =>
-        f.relativePath.startsWith(`${sourceName}/`),
-      );
+      const prefixedFiles = files.filter((f) => f.relativePath.startsWith(`${sourceName}/`));
       expect(prefixedFiles.length).toBe(files.length);
     });
 
     test("handles hidden files with dot patterns", async () => {
       // Bun.Glob requires explicit dot pattern for hidden files
-      const sources: SourceConfig[] = [
-        { path: sourceDir, patterns: ["**/*", ".**", "**/.**"] },
-      ];
+      const sources: SourceConfig[] = [{ path: sourceDir, patterns: ["**/*", ".**", "**/.**"] }];
       const { files } = await collectFiles(sources);
 
       // Hidden files may or may not be matched depending on glob behavior
@@ -133,9 +113,7 @@ describe("archive", () => {
 
   describe("createArchive", () => {
     test("creates a tar.gz archive", async () => {
-      const sources: SourceConfig[] = [
-        { path: sourceDir, patterns: ["*.txt"] },
-      ];
+      const sources: SourceConfig[] = [{ path: sourceDir, patterns: ["*.txt"] }];
       const result = await createArchive(sources, "test", "backitup", 6);
 
       expect(result.archiveName).toMatch(/\.tar\.gz$/);
@@ -153,9 +131,7 @@ describe("archive", () => {
     });
 
     test("includes correct file count", async () => {
-      const sources: SourceConfig[] = [
-        { path: sourceDir, patterns: ["*.txt"] },
-      ];
+      const sources: SourceConfig[] = [{ path: sourceDir, patterns: ["*.txt"] }];
       const result = await createArchive(sources, "test", "backitup", 6);
 
       // Should have file1.txt (not subdir files with *.txt pattern at root)
@@ -184,10 +160,7 @@ describe("archive", () => {
 
     test("includes source names in archive name", async () => {
       const sources: SourceConfig[] = [{ path: sourceDir }];
-      const result = await createArchive(sources, "daily", "backitup", 6, [
-        "app",
-        "db",
-      ]);
+      const result = await createArchive(sources, "daily", "backitup", 6, ["app", "db"]);
 
       expect(result.archiveName).toContain("_app-db_");
 
@@ -195,13 +168,9 @@ describe("archive", () => {
     });
 
     test("throws for empty file collection", async () => {
-      const sources: SourceConfig[] = [
-        { path: sourceDir, patterns: ["*.nonexistent"] },
-      ];
+      const sources: SourceConfig[] = [{ path: sourceDir, patterns: ["*.nonexistent"] }];
 
-      await expect(
-        createArchive(sources, "test", "backitup", 6),
-      ).rejects.toThrow("No files found");
+      await expect(createArchive(sources, "test", "backitup", 6)).rejects.toThrow("No files found");
     });
 
     test("tracks source paths", async () => {

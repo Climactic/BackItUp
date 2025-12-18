@@ -13,9 +13,7 @@ export interface CollectedFile {
   size: number;
 }
 
-async function collectFilesFromSource(
-  source: SourceConfig,
-): Promise<CollectedFile[]> {
+async function collectFilesFromSource(source: SourceConfig): Promise<CollectedFile[]> {
   const basePath = path.resolve(source.path);
   const files: CollectedFile[] = [];
 
@@ -26,9 +24,7 @@ async function collectFilesFromSource(
 
   const patterns = source.patterns ?? ["**/*"];
   const includePatterns = patterns.filter((p) => !p.startsWith("!"));
-  const excludePatterns = patterns
-    .filter((p) => p.startsWith("!"))
-    .map((p) => p.slice(1));
+  const excludePatterns = patterns.filter((p) => p.startsWith("!")).map((p) => p.slice(1));
 
   // Pre-compile exclude globs for performance
   const excludeGlobs = excludePatterns.map((p) => new Bun.Glob(p));

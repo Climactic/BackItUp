@@ -41,15 +41,12 @@ export function generateArchiveName(
   const time = now.toISOString().slice(11, 19).replace(/:/g, "");
   const shortId = generateShortId();
 
-  const sourcePart =
-    sourceNames && sourceNames.length > 0 ? sourceNames.join("-") : "all";
+  const sourcePart = sourceNames && sourceNames.length > 0 ? sourceNames.join("-") : "all";
 
   return `${prefix}_${sourcePart}_${schedule}_${date}_${time}_${shortId}.tar.gz`;
 }
 
-export function parseArchiveName(
-  archiveName: string,
-): ParsedArchiveName | null {
+export function parseArchiveName(archiveName: string): ParsedArchiveName | null {
   const match = archiveName.match(
     /^([a-z]+)_([a-z0-9-]+)_([a-z]+)_(\d{4}-\d{2}-\d{2})_(\d{6})_([a-z0-9]+)\.tar\.gz$/,
   );
@@ -66,9 +63,7 @@ export function parseArchiveName(
   };
 }
 
-export function parseVolumeArchiveName(
-  archiveName: string,
-): ParsedVolumeArchiveName | null {
+export function parseVolumeArchiveName(archiveName: string): ParsedVolumeArchiveName | null {
   const match = archiveName.match(
     /^([a-z]+)-volume-([a-zA-Z0-9_-]+)-([a-z]+)-(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z)\.tar\.gz$/,
   );

@@ -61,9 +61,7 @@ export async function listVolumes(): Promise<DockerVolume[]> {
 /**
  * Get detailed information about a specific volume
  */
-export async function inspectVolume(
-  name: string,
-): Promise<DockerVolume | null> {
+export async function inspectVolume(name: string): Promise<DockerVolume | null> {
   const result = await dockerRun(["volume", "inspect", name]);
 
   if (!result.success) {
@@ -100,9 +98,7 @@ export async function volumeExists(name: string): Promise<boolean> {
 /**
  * Get containers that are using a specific volume
  */
-export async function getVolumeContainers(
-  volumeName: string,
-): Promise<VolumeContainer[]> {
+export async function getVolumeContainers(volumeName: string): Promise<VolumeContainer[]> {
   // Get all containers (running and stopped) that have this volume mounted
   const result = await dockerRun([
     "ps",
@@ -114,10 +110,7 @@ export async function getVolumeContainers(
   ]);
 
   if (!result.success) {
-    logger.error(
-      `Failed to get containers for volume ${volumeName}`,
-      result.stderr,
-    );
+    logger.error(`Failed to get containers for volume ${volumeName}`, result.stderr);
     return [];
   }
 

@@ -5,9 +5,7 @@ import type { SourceConfig } from "../../src/types";
 describe("orchestrator", () => {
   describe("getSourceFolder", () => {
     test("uses s3Prefix when single source has it set", () => {
-      const sources: SourceConfig[] = [
-        { path: "/app", s3Prefix: "my-custom-folder" },
-      ];
+      const sources: SourceConfig[] = [{ path: "/app", s3Prefix: "my-custom-folder" }];
       const sourceNames = ["app"];
 
       const folder = getSourceFolder(sources, sourceNames);
@@ -34,10 +32,7 @@ describe("orchestrator", () => {
     });
 
     test("joins source names even when first source has s3Prefix (multi-source)", () => {
-      const sources: SourceConfig[] = [
-        { path: "/app", s3Prefix: "custom" },
-        { path: "/db" },
-      ];
+      const sources: SourceConfig[] = [{ path: "/app", s3Prefix: "custom" }, { path: "/db" }];
       const sourceNames = ["app", "db"];
 
       const folder = getSourceFolder(sources, sourceNames);
@@ -47,11 +42,7 @@ describe("orchestrator", () => {
     });
 
     test("handles three or more sources", () => {
-      const sources: SourceConfig[] = [
-        { path: "/app" },
-        { path: "/db" },
-        { path: "/cache" },
-      ];
+      const sources: SourceConfig[] = [{ path: "/app" }, { path: "/db" }, { path: "/cache" }];
       const sourceNames = ["app", "db", "cache"];
 
       const folder = getSourceFolder(sources, sourceNames);
@@ -69,9 +60,7 @@ describe("orchestrator", () => {
     });
 
     test("uses s3Prefix with special characters", () => {
-      const sources: SourceConfig[] = [
-        { path: "/app", s3Prefix: "prod/backups/app-data" },
-      ];
+      const sources: SourceConfig[] = [{ path: "/app", s3Prefix: "prod/backups/app-data" }];
       const sourceNames = ["app"];
 
       const folder = getSourceFolder(sources, sourceNames);

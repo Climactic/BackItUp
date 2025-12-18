@@ -4,10 +4,7 @@
 
 import type { BackupRecord, BackupType } from "../types";
 
-export type RawBackupRow = Omit<
-  BackupRecord,
-  "source_paths" | "volume_was_in_use"
-> & {
+export type RawBackupRow = Omit<BackupRecord, "source_paths" | "volume_was_in_use"> & {
   source_paths: string;
   volume_was_in_use: number;
 };

@@ -4,10 +4,7 @@ import type { BackitupConfig } from "../../src/types";
 
 // Helper to create test config
 function createTestConfig(
-  schedules: Record<
-    string,
-    { cron: string; retention?: { maxCount: number; maxDays: number } }
-  >,
+  schedules: Record<string, { cron: string; retention?: { maxCount: number; maxDays: number } }>,
 ): BackitupConfig {
   return {
     version: "1.0",

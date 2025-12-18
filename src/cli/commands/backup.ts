@@ -1,5 +1,15 @@
 import { parseArgs } from "node:util";
-import { findAndLoadConfig } from "../../config/loader";
+import {
+  ConfigError,
+  canRunWithoutConfigFile,
+  createConfigFromInlineOptions,
+  extractInlineOptions,
+  findAndLoadConfig,
+  hasInlineOptions,
+  INLINE_CONFIG_OPTIONS,
+  mergeInlineConfig,
+  validateInlineOptionsForConfigFreeMode,
+} from "../../config/loader";
 import { runBackup } from "../../core";
 import { setLogLevel } from "../../utils/logger";
 import { formatBytes, formatDuration } from "../../utils/naming";
@@ -19,6 +29,8 @@ export async function backupCommand(args: string[]): Promise<number> {
       volume: { type: "string", multiple: true },
       verbose: { type: "boolean", short: "v", default: false },
       help: { type: "boolean", short: "h", default: false },
+      // Inline config options
+      ...INLINE_CONFIG_OPTIONS,
     },
     allowPositionals: false,
   });
@@ -33,7 +45,36 @@ export async function backupCommand(args: string[]): Promise<number> {
   }
 
   try {
-    const config = await findAndLoadConfig(values.config);
+    const inlineOptions = extractInlineOptions(values as Record<string, unknown>);
+    let config;
+
+    // Try to load config file, or use inline options if sufficient
+    try {
+      config = await findAndLoadConfig(values.config);
+      // Apply inline config overrides
+      if (hasInlineOptions(inlineOptions)) {
+        config = mergeInlineConfig(config, inlineOptions);
+      }
+    } catch (error) {
+      // If no config file found, try to use inline options
+      if (error instanceof ConfigError && !values.config) {
+        if (canRunWithoutConfigFile(inlineOptions)) {
+          config = createConfigFromInlineOptions(inlineOptions);
+        } else {
+          // Show what's missing
+          const validation = validateInlineOptionsForConfigFreeMode(inlineOptions);
+          ui.error("No config file found and inline options are insufficient:");
+          for (const err of validation.errors) {
+            ui.message(`  - ${err}`);
+          }
+          ui.info("\nEither create a config file or provide required inline options.");
+          ui.info("Required: --source (or --docker-volume) AND (--local-path or --s3-bucket)");
+          return 1;
+        }
+      } else {
+        throw error;
+      }
+    }
 
     // Determine schedule - interactive if not provided
     let schedule = values.schedule;
@@ -67,9 +108,7 @@ export async function backupCommand(args: string[]): Promise<number> {
     // Validate schedule exists or is 'manual'
     if (schedule !== "manual" && !config.schedules[schedule]) {
       ui.error(`Unknown schedule: ${schedule}`);
-      ui.info(
-        `Available schedules: ${Object.keys(config.schedules).join(", ")}, manual`,
-      );
+      ui.info(`Available schedules: ${Object.keys(config.schedules).join(", ")}, manual`);
       return 1;
     }
 
@@ -99,9 +138,7 @@ export async function backupCommand(args: string[]): Promise<number> {
       volumes: values.volume,
     });
 
-    s.stop(
-      values["volumes-only"] ? "Volume backup created" : "Archive created",
-    );
+    s.stop(values["volumes-only"] ? "Volume backup created" : "Archive created");
 
     // Show upload progress if applicable
     if (result.localPath || result.s3Key) {
@@ -138,17 +175,12 @@ export async function backupCommand(args: string[]): Promise<number> {
         label: "Volumes backed up",
         value: result.volumeBackups.length.toString(),
       });
-      const totalVolumeSize = result.volumeBackups.reduce(
-        (sum, v) => sum + v.sizeBytes,
-        0,
-      );
+      const totalVolumeSize = result.volumeBackups.reduce((sum, v) => sum + v.sizeBytes, 0);
       summaryItems.push({
         label: "Volume backup size",
         value: formatBytes(totalVolumeSize),
       });
-      const volumeNames = result.volumeBackups
-        .map((v) => v.volumeName)
-        .join(", ");
+      const volumeNames = result.volumeBackups.map((v) => v.volumeName).join(", ");
       summaryItems.push({
         label: "Volume names",
         value: volumeNames,
@@ -199,6 +231,29 @@ ${color.dim("OPTIONS:")}
   -v, --verbose           Verbose output
   -h, --help              Show this help message
 
+${color.dim("INLINE CONFIG OPTIONS:")}
+      --database <path>            Database file path
+      --source <path>              Source path to backup (can be repeated)
+      --pattern <glob>             Glob pattern for filtering (can be repeated)
+      --local-path <path>          Local storage path
+      --no-local                   Disable local storage
+      --s3-bucket <name>           S3 bucket name
+      --s3-prefix <prefix>         S3 key prefix
+      --s3-region <region>         S3 region
+      --s3-endpoint <url>          S3-compatible endpoint URL
+      --s3-access-key-id <key>     S3 access key ID
+      --s3-secret-access-key <key> S3 secret access key
+      --no-s3                      Disable S3 storage
+      --retention-count <n>        Maximum number of backups to keep
+      --retention-days <n>         Maximum days to retain backups
+      --archive-prefix <str>       Archive filename prefix (default: backitup)
+      --compression <0-9>          Compression level (default: 6)
+      --verify-before-delete       Verify checksums before cleanup
+      --no-verify-before-delete    Skip checksum verification on cleanup
+      --docker                     Enable Docker volume backups
+      --no-docker                  Disable Docker volume backups
+      --docker-volume <name>       Docker volume to backup (can be repeated)
+
 ${color.dim("EXAMPLES:")}
   backitup backup                          # Interactive schedule selection
   backitup backup -s manual                # Manual backup (non-interactive)
@@ -208,5 +263,10 @@ ${color.dim("EXAMPLES:")}
   backitup backup --volumes-only           # Only backup Docker volumes
   backitup backup --skip-volumes           # Skip Docker volumes
   backitup backup --volume mydb_data       # Backup specific volume
+
+${color.dim("INLINE CONFIG EXAMPLES:")}
+  backitup backup -s manual --source /data --local-path /backups
+  backitup backup -s manual --source /app --s3-bucket my-backups --no-local
+  backitup backup -s manual --source /db --retention-count 5 --retention-days 7
 `);
 }

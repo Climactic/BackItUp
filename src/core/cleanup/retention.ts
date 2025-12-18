@@ -20,13 +20,10 @@ export function getCleanupCandidates(
 
   // Sort by created_at descending (newest first)
   const sorted = [...backups].sort(
-    (a, b) =>
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
   );
 
-  const cutoffDate = new Date(
-    Date.now() - retention.maxDays * 24 * 60 * 60 * 1000,
-  );
+  const cutoffDate = new Date(Date.now() - retention.maxDays * 24 * 60 * 60 * 1000);
 
   sorted.forEach((backup, index) => {
     const isOverCount = index >= retention.maxCount;

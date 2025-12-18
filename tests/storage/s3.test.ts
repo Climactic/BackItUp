@@ -54,11 +54,7 @@ describe("S3 storage", () => {
     });
 
     test("handles volume folder format", () => {
-      const key = buildS3Key(
-        "backups",
-        "volumes/postgres-data",
-        "volume.tar.gz",
-      );
+      const key = buildS3Key("backups", "volumes/postgres-data", "volume.tar.gz");
       expect(key).toBe("backups/volumes/postgres-data/volume.tar.gz");
     });
   });
@@ -66,9 +62,7 @@ describe("S3 storage", () => {
   describe("isKeyWithinPrefix", () => {
     test("returns true when key starts with prefix", () => {
       expect(isKeyWithinPrefix("backups/file.tar.gz", "backups")).toBe(true);
-      expect(isKeyWithinPrefix("backups/app/file.tar.gz", "backups")).toBe(
-        true,
-      );
+      expect(isKeyWithinPrefix("backups/app/file.tar.gz", "backups")).toBe(true);
     });
 
     test("returns true when no prefix is set", () => {
@@ -86,9 +80,7 @@ describe("S3 storage", () => {
     test("does not match partial prefix names", () => {
       // "backups-old/file.tar.gz" should not match prefix "backups"
       // because the normalized prefix is "backups/" and the key doesn't start with it
-      expect(isKeyWithinPrefix("backups-old/file.tar.gz", "backups")).toBe(
-        false,
-      );
+      expect(isKeyWithinPrefix("backups-old/file.tar.gz", "backups")).toBe(false);
     });
   });
 });

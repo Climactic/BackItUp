@@ -73,7 +73,7 @@ docker pull ghcr.io/climactic/backitup:latest
 
 ## ⚡ Quick Start
 
-**1.** Create `backitup.config.yaml` ([full reference](docs/configuration.md)):
+**1.** Create `backitup.config.yaml` ([configuration reference](docs/configuration.md)):
 
 ```yaml
 version: "1.0"
@@ -123,25 +123,130 @@ backitup verify --all        # Verify integrity
 
 ## 📖 Commands
 
-| Command                     | Description                                      |
-| --------------------------- | ------------------------------------------------ |
-| `backitup start`            | 🚀 Start scheduler daemon                         |
-| `backitup backup`           | 💾 Create manual backup                           |
-| `backitup backup -s hourly` | ⏰ Use specific schedule settings                 |
-| `backitup backup --dry-run` | 👀 Preview without creating                       |
-| `backitup cleanup`          | 🧹 Clean old backups per retention policy         |
-| `backitup list`             | 📋 List backups (`-s`, `-n`, `--format json/csv`) |
-| `backitup verify --all`     | ✅ Verify all backup checksums                    |
+All commands support `-c, --config <path>` to specify a config file and `-h, --help` for detailed usage.
 
-### Docker Volume Commands
+| Command            | Description             | Docs                                   |
+| ------------------ | ----------------------- | -------------------------------------- |
+| `backitup backup`  | Create a backup         | [backup.md](docs/commands/backup.md)   |
+| `backitup start`   | Start scheduler daemon  | [start.md](docs/commands/start.md)     |
+| `backitup list`    | List existing backups   | [list.md](docs/commands/list.md)       |
+| `backitup cleanup` | Clean old backups       | [cleanup.md](docs/commands/cleanup.md) |
+| `backitup verify`  | Verify backup integrity | [verify.md](docs/commands/verify.md)   |
 
-| Command                        | Description                              |
-| ------------------------------ | ---------------------------------------- |
-| `backitup backup`              | Backup both files and Docker volumes     |
-| `backitup backup --volumes-only` | Only backup Docker volumes             |
-| `backitup backup --skip-volumes` | Only backup files, skip volumes        |
-| `backitup backup --volume mydb`  | Backup specific volume(s)              |
-| `backitup list --type volume`    | List only volume backups               |
+```bash
+backitup start                    # Start scheduler daemon
+backitup start -c /etc/backup.yaml
+
+backitup backup                   # Create backup (interactive)
+backitup backup -s daily          # Create backup with schedule tag
+backitup backup --dry-run         # Preview what would be backed up
+backitup backup --local-only      # Skip S3 upload
+backitup backup --volumes-only    # Only backup Docker volumes
+
+backitup cleanup                  # Clean old backups (with confirmation)
+backitup cleanup -s daily         # Clean only "daily" tagged backups
+backitup cleanup --dry-run        # Preview deletions
+backitup cleanup --force          # Skip confirmation
+
+backitup list                     # List all backups
+backitup list -s daily -n 10      # Filter by schedule, limit results
+backitup list --format json       # Output as JSON or CSV
+
+backitup verify --all             # Verify all backup checksums
+backitup verify <backup-id>       # Verify specific backup
+backitup verify --all --fix       # Update DB for missing files
+```
+
+---
+
+## ⚙️ Inline Configuration
+
+Override config file settings directly from the command line. Useful for quick backups, scripts, or CI/CD pipelines. See [full inline config documentation](docs/inline-config.md).
+
+### Available Options
+
+| Category          | Option                         | Description                                  |
+| ----------------- | ------------------------------ | -------------------------------------------- |
+| **Database**      | `--database <path>`            | Database file path                           |
+| **Sources**       | `--source <path>`              | Source path to backup (can be repeated)      |
+|                   | `--pattern <glob>`             | Glob pattern for filtering (can be repeated) |
+| **Local Storage** | `--local-path <path>`          | Local storage path                           |
+|                   | `--no-local`                   | Disable local storage                        |
+| **S3 Storage**    | `--s3-bucket <name>`           | S3 bucket name                               |
+|                   | `--s3-prefix <prefix>`         | S3 key prefix                                |
+|                   | `--s3-region <region>`         | S3 region                                    |
+|                   | `--s3-endpoint <url>`          | S3-compatible endpoint URL                   |
+|                   | `--s3-access-key-id <key>`     | S3 access key ID                             |
+|                   | `--s3-secret-access-key <key>` | S3 secret access key                         |
+|                   | `--no-s3`                      | Disable S3 storage                           |
+| **Retention**     | `--retention-count <n>`        | Maximum backups to keep                      |
+|                   | `--retention-days <n>`         | Maximum days to retain backups               |
+| **Archive**       | `--archive-prefix <str>`       | Archive filename prefix                      |
+|                   | `--compression <0-9>`          | Compression level (default: 6)               |
+| **Safety**        | `--verify-before-delete`       | Verify checksums before cleanup              |
+|                   | `--no-verify-before-delete`    | Skip checksum verification                   |
+| **Docker**        | `--docker`                     | Enable Docker volume backups                 |
+|                   | `--no-docker`                  | Disable Docker volume backups                |
+|                   | `--docker-volume <name>`       | Docker volume to backup (can be repeated)    |
+
+### Examples
+
+```bash
+# Quick backup with inline sources
+backitup backup -s manual --source /var/www/app --local-path /backups
+
+# Multiple sources with glob patterns
+backitup backup -s manual --source /data --source /logs --pattern "**/*.log" --local-path /backups
+
+# Backup directly to S3
+backitup backup -s manual --source /app --s3-bucket my-backups --s3-region us-west-2 --no-local
+
+# Backup with S3 credentials inline
+backitup backup -s manual --source /data --s3-bucket my-bucket \
+  --s3-access-key-id AKIAIOSFODNN7EXAMPLE \
+  --s3-secret-access-key wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+
+# Start scheduler with inline overrides
+backitup start --source /data --local-path /backups --s3-bucket my-bucket
+
+# Override retention and compression
+backitup backup -s manual --source /db --retention-count 5 --retention-days 7 --compression 9
+
+# Backup Docker volumes inline
+backitup backup -s manual --docker-volume postgres_data --docker-volume redis_data --local-path /backups
+```
+
+Inline options are merged with your config file. This allows you to use a base config and override specific settings as needed.
+
+### Config-Free Mode
+
+You can run backitup without a config file by providing the required inline options:
+
+**Required options:**
+
+- At least one source: `--source` or `--docker-volume`
+- At least one storage: `--local-path` or `--s3-bucket`
+
+```bash
+# Minimal backup without config file
+backitup backup -s manual --source /data --local-path /backups
+
+# Backup to S3 without config file
+backitup backup -s manual --source /app --s3-bucket my-backups --s3-region us-west-2
+
+# Docker volume backup without config file
+backitup backup -s manual --docker-volume postgres_data --local-path /backups
+
+# Full example with multiple options
+backitup backup -s manual \
+  --source /var/www/app \
+  --pattern "**/*.js" --pattern "!**/node_modules/**" \
+  --local-path /backups \
+  --retention-count 5 \
+  --compression 9
+```
+
+If you run without a config file and don't provide sufficient options, backitup will tell you what's missing.
 
 ---
 
@@ -274,6 +379,21 @@ WantedBy=multi-user.target
 
 ---
 
+## 📚 Documentation
+
+| Document                                         | Description                      |
+| ------------------------------------------------ | -------------------------------- |
+| [Configuration Reference](docs/configuration.md) | Complete config file reference   |
+| [Inline Configuration](docs/inline-config.md)    | CLI options and config-free mode |
+| **Commands**                                     |                                  |
+| [backup](docs/commands/backup.md)                | Create backups                   |
+| [start](docs/commands/start.md)                  | Run scheduler daemon             |
+| [list](docs/commands/list.md)                    | List existing backups            |
+| [cleanup](docs/commands/cleanup.md)              | Remove old backups               |
+| [verify](docs/commands/verify.md)                | Verify backup integrity          |
+
+---
+
 ## 🛠️ Development
 
 ```bash
@@ -308,4 +428,5 @@ Title sponsors get their logo showcased here and in the project documentation. [
 ---
 
 ## 📜 License
+
 [![License](https://img.shields.io/github/license/climactic/backitup?style=for-the-badge)](LICENSE)

@@ -17,9 +17,9 @@ export function getLatestVersion(): number {
 
 export function getCurrentVersion(database: Database): number {
   try {
-    const row = database
-      .query("SELECT MAX(version) as version FROM schema_version")
-      .get() as { version: number } | null;
+    const row = database.query("SELECT MAX(version) as version FROM schema_version").get() as {
+      version: number;
+    } | null;
     return row?.version ?? 0;
   } catch {
     return 0;
@@ -47,9 +47,7 @@ export function runMigrations(database: Database): void {
 
   for (const migration of pending) {
     runMigrationStatements(database, migration.up);
-    database.run("INSERT INTO schema_version (version) VALUES (?)", [
-      migration.version,
-    ]);
+    database.run("INSERT INTO schema_version (version) VALUES (?)", [migration.version]);
   }
 }
 
@@ -58,17 +56,13 @@ export function initializeDatabase(database: Database): void {
   database.run("PRAGMA foreign_keys = ON");
 
   const versionTable = database
-    .query(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='schema_version'",
-    )
+    .query("SELECT name FROM sqlite_master WHERE type='table' AND name='schema_version'")
     .get();
 
   if (!versionTable) {
     for (const migration of getAllMigrations()) {
       runMigrationStatements(database, migration.up);
-      database.run("INSERT INTO schema_version (version) VALUES (?)", [
-        migration.version,
-      ]);
+      database.run("INSERT INTO schema_version (version) VALUES (?)", [migration.version]);
     }
   } else {
     runMigrations(database);

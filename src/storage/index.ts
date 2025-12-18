@@ -32,9 +32,7 @@ export {
 /**
  * Create storage providers based on config
  */
-export function createStorageProviders(
-  config: BackitupConfig,
-): IStorageProvider[] {
+export function createStorageProviders(config: BackitupConfig): IStorageProvider[] {
   const providers: IStorageProvider[] = [];
 
   if (config.local.enabled) {

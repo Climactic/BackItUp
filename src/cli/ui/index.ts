@@ -4,12 +4,7 @@
 
 export type { SummaryItem } from "./formatters";
 // Formatters
-export {
-  formatSummary,
-  formatTableRow,
-  formatTableSeparator,
-  TABLE_WIDTHS,
-} from "./formatters";
+export { formatSummary, formatTableRow, formatTableSeparator, TABLE_WIDTHS } from "./formatters";
 // Output
 export {
   cancel,

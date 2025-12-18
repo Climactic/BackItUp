@@ -121,20 +121,21 @@ Required. Currently must be `"1.0"`.
 
 ### `database`
 
-| Field  | Type   | Required | Description                          |
-|--------|--------|----------|--------------------------------------|
-| `path` | string | Yes      | Path to SQLite database file         |
+| Field  | Type   | Required | Description                  |
+| ------ | ------ | -------- | ---------------------------- |
+| `path` | string | Yes      | Path to SQLite database file |
 
 ### `sources`
 
 Named backup sources. Each source defines files to include in backups.
 
-| Field      | Type     | Required | Description                                    |
-|------------|----------|----------|------------------------------------------------|
-| `path`     | string   | Yes      | Base directory path                            |
-| `patterns` | string[] | No       | Glob patterns (default: `["**/*"]`)            |
+| Field      | Type     | Required | Description                         |
+| ---------- | -------- | -------- | ----------------------------------- |
+| `path`     | string   | Yes      | Base directory path                 |
+| `patterns` | string[] | No       | Glob patterns (default: `["**/*"]`) |
 
 **Glob Pattern Examples:**
+
 - `**/*.ts` - All TypeScript files
 - `!**/node_modules/**` - Exclude node_modules
 - `src/**` - Everything in src directory
@@ -143,28 +144,29 @@ Named backup sources. Each source defines files to include in backups.
 
 Local filesystem storage.
 
-| Field     | Type    | Required | Description                    |
-|-----------|---------|----------|--------------------------------|
-| `enabled` | boolean | Yes      | Enable local storage           |
-| `path`    | string  | Yes*     | Directory for backup files     |
+| Field     | Type    | Required | Description                |
+| --------- | ------- | -------- | -------------------------- |
+| `enabled` | boolean | Yes      | Enable local storage       |
+| `path`    | string  | Yes\*    | Directory for backup files |
 
-*Required when enabled.
+\*Required when enabled.
 
 ### `s3`
 
 S3-compatible storage (AWS S3, R2, MinIO, etc.).
 
-| Field             | Type    | Required | Description                          |
-|-------------------|---------|----------|--------------------------------------|
-| `enabled`         | boolean | Yes      | Enable S3 storage                    |
-| `bucket`          | string  | Yes*     | S3 bucket name                       |
-| `prefix`          | string  | No       | Key prefix for all objects           |
-| `region`          | string  | No       | AWS region (default: `us-east-1`)    |
-| `endpoint`        | string  | No       | Custom endpoint for S3-compatible    |
+| Field      | Type    | Required | Description                       |
+| ---------- | ------- | -------- | --------------------------------- |
+| `enabled`  | boolean | Yes      | Enable S3 storage                 |
+| `bucket`   | string  | Yes\*    | S3 bucket name                    |
+| `prefix`   | string  | No       | Key prefix for all objects        |
+| `region`   | string  | No       | AWS region (default: `us-east-1`) |
+| `endpoint` | string  | No       | Custom endpoint for S3-compatible |
 
-*Required when enabled.
+\*Required when enabled.
 
 **Environment Variables:**
+
 - `S3_ACCESS_KEY_ID` or `AWS_ACCESS_KEY_ID`
 - `S3_SECRET_ACCESS_KEY` or `AWS_SECRET_ACCESS_KEY`
 - `S3_REGION` (optional)
@@ -174,12 +176,12 @@ S3-compatible storage (AWS S3, R2, MinIO, etc.).
 
 Named schedules with cron expressions and retention policies.
 
-| Field                  | Type     | Required | Description                              |
-|------------------------|----------|----------|------------------------------------------|
-| `cron`                 | string   | Yes      | Cron expression (5 fields)               |
-| `retention.maxCount`   | number   | No       | Maximum backups to keep                  |
-| `retention.maxDays`    | number   | No       | Delete backups older than N days         |
-| `sources`              | string[] | No       | Limit to specific sources                |
+| Field                | Type     | Required | Description                      |
+| -------------------- | -------- | -------- | -------------------------------- |
+| `cron`               | string   | Yes      | Cron expression (5 fields)       |
+| `retention.maxCount` | number   | No       | Maximum backups to keep          |
+| `retention.maxDays`  | number   | No       | Delete backups older than N days |
+| `sources`            | string[] | No       | Limit to specific sources        |
 
 **Cron Format:** `minute hour day-of-month month day-of-week`
 
@@ -187,41 +189,41 @@ Named schedules with cron expressions and retention policies.
 
 Archive creation settings.
 
-| Field         | Type   | Required | Default      | Description                    |
-|---------------|--------|----------|--------------|--------------------------------|
-| `prefix`      | string | No       | `"backitup"` | Archive filename prefix        |
-| `compression` | number | No       | `6`          | gzip level (1-9)               |
+| Field         | Type   | Required | Default      | Description             |
+| ------------- | ------ | -------- | ------------ | ----------------------- |
+| `prefix`      | string | No       | `"backitup"` | Archive filename prefix |
+| `compression` | number | No       | `6`          | gzip level (1-9)        |
 
 ### `safety`
 
 Safety features for cleanup operations.
 
-| Field                       | Type    | Required | Default | Description                           |
-|-----------------------------|---------|----------|---------|---------------------------------------|
-| `dryRun`                    | boolean | No       | `false` | Preview without making changes        |
-| `verifyChecksumBeforeDelete`| boolean | No       | `true`  | Verify checksums before deletion      |
+| Field                        | Type    | Required | Default | Description                      |
+| ---------------------------- | ------- | -------- | ------- | -------------------------------- |
+| `dryRun`                     | boolean | No       | `false` | Preview without making changes   |
+| `verifyChecksumBeforeDelete` | boolean | No       | `true`  | Verify checksums before deletion |
 
 ### `docker`
 
 Docker volume backup configuration.
 
-| Field     | Type    | Required | Description                    |
-|-----------|---------|----------|--------------------------------|
-| `enabled` | boolean | Yes      | Enable Docker volume backups   |
-| `volumes` | array   | Yes*     | List of volumes to backup      |
+| Field     | Type    | Required | Description                  |
+| --------- | ------- | -------- | ---------------------------- |
+| `enabled` | boolean | Yes      | Enable Docker volume backups |
+| `volumes` | array   | Yes\*    | List of volumes to backup    |
 
-*Required when enabled.
+\*Required when enabled.
 
 **Volume Entry:**
 
 | Field         | Type   | Required | Description                                    |
-|---------------|--------|----------|------------------------------------------------|
+| ------------- | ------ | -------- | ---------------------------------------------- |
 | `name`        | string | Yes      | Volume name or Compose service name            |
 | `type`        | string | No       | `"volume"` (default) or `"compose"`            |
-| `composePath` | string | No*      | Path to docker-compose.yml                     |
+| `composePath` | string | No\*     | Path to docker-compose.yml                     |
 | `projectName` | string | No       | Compose project name (inferred from directory) |
 
-*Required when `type: compose`.
+\*Required when `type: compose`.
 
 ## Minimal Configuration
 

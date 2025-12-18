@@ -34,11 +34,7 @@ function shouldLog(level: LogLevel): boolean {
   return LEVEL_PRIORITY[level] >= LEVEL_PRIORITY[currentLevel];
 }
 
-function formatMessage(
-  level: LogLevel,
-  message: string,
-  data?: unknown,
-): string {
+function formatMessage(level: LogLevel, message: string, data?: unknown): string {
   const timestamp = formatTimestamp();
   const color = LEVEL_COLORS[level];
   const levelStr = level.toUpperCase().padEnd(5);

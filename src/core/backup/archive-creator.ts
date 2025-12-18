@@ -68,10 +68,7 @@ export async function createArchive(
   }
 }
 
-async function stageFiles(
-  files: CollectedFile[],
-  tempDir: string,
-): Promise<void> {
+async function stageFiles(files: CollectedFile[], tempDir: string): Promise<void> {
   const dirsCreated = new Set<string>();
 
   for (const file of files) {
@@ -98,9 +95,7 @@ async function createTarGzip(
 ): Promise<void> {
   logger.debug(`Creating tar.gz archive with compression level ${compression}`);
 
-  const entries = await Array.fromAsync(
-    new Bun.Glob("*").scan({ cwd: tempDir, onlyFiles: false }),
-  );
+  const entries = await Array.fromAsync(new Bun.Glob("*").scan({ cwd: tempDir, onlyFiles: false }));
   const archiveEntries = entries.filter((e) => !e.endsWith(".tar.gz"));
 
   if (archiveEntries.length === 0) {

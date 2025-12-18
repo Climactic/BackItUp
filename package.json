@@ -1,15 +1,15 @@
 {
   "name": "@climactic/backitup",
   "version": "1.0.0-rc.1",
+  "description": "Secure backup utility with glob patterns, tar.gz archives, local + S3 storage, and safe cleanup",
   "author": {
     "name": "Climactic",
     "email": "oss@climactic.co",
     "url": "https://climactic.co"
   },
   "funding": "https://github.com/sponsors/Climactic",
-  "description": "Secure backup utility with glob patterns, tar.gz archives, local + S3 storage, and safe cleanup",
-  "module": "src/index.ts",
   "type": "module",
+  "module": "src/index.ts",
   "bin": {
     "backitup": "./src/index.ts"
   },
@@ -24,19 +24,22 @@
     "build:windows-x64": "bun build src/index.ts --compile --target=bun-windows-x64 --outfile backitup-windows-x64",
     "build:all": "bun run build:linux-x64 && bun run build:linux-arm64",
     "test": "bun test",
-    "check": "bunx biome check --write"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "2.3.10",
-    "@types/bun": "latest",
-    "@types/js-yaml": "^4.0.9"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
+    "lint": "bunx oxlint --fix",
+    "format": "bunx oxfmt@latest --fix"
   },
   "dependencies": {
     "@clack/prompts": "^0.11.0",
     "cron-parser": "^5.4.0",
     "js-yaml": "^4.1.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.3.10",
+    "@types/bun": "latest",
+    "@types/js-yaml": "^4.0.9",
+    "oxfmt": "^0.18.0",
+    "oxlint": "^1.33.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
   }
 }

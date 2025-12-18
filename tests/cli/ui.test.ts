@@ -1,11 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import {
-  color,
-  formatSummary,
-  formatTableRow,
-  formatTableSeparator,
-  ui,
-} from "../../src/cli/ui";
+import { color, formatSummary, formatTableRow, formatTableSeparator, ui } from "../../src/cli/ui";
 
 describe("CLI UI utilities", () => {
   describe("ui object", () => {

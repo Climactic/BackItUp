@@ -30,9 +30,7 @@ describe("crypto utilities", () => {
       const checksum = await computeFileChecksum(testFile);
 
       // SHA256 of "hello world"
-      expect(checksum).toBe(
-        "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9",
-      );
+      expect(checksum).toBe("b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9");
     });
 
     test("returns different checksums for different content", async () => {
@@ -66,9 +64,7 @@ describe("crypto utilities", () => {
       const checksum = await computeFileChecksum(emptyFile);
 
       // SHA256 of empty string
-      expect(checksum).toBe(
-        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      );
+      expect(checksum).toBe("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
     });
 
     test("handles binary content", async () => {
@@ -85,9 +81,7 @@ describe("crypto utilities", () => {
   describe("computeStringHash", () => {
     test("computes SHA256 hash of a string", () => {
       const hash = computeStringHash("hello world");
-      expect(hash).toBe(
-        "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9",
-      );
+      expect(hash).toBe("b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9");
     });
 
     test("returns consistent hash for same input", () => {
@@ -104,9 +98,7 @@ describe("crypto utilities", () => {
 
     test("handles empty string", () => {
       const hash = computeStringHash("");
-      expect(hash).toBe(
-        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      );
+      expect(hash).toBe("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
     });
 
     test("handles unicode characters", () => {
@@ -183,9 +175,7 @@ describe("crypto utilities", () => {
   describe("generateUUID", () => {
     test("generates valid UUID format", () => {
       const uuid = generateUUID();
-      expect(uuid).toMatch(
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
-      );
+      expect(uuid).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
     });
 
     test("generates unique UUIDs", () => {

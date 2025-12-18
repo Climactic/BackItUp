@@ -44,10 +44,7 @@ export async function listCommand(args: string[]): Promise<number> {
     let backups: BackupRecord[];
     if (values.schedule) {
       backups = getActiveBackupsBySchedule(values.schedule);
-    } else if (
-      values.type &&
-      (values.type === "files" || values.type === "volume")
-    ) {
+    } else if (values.type && (values.type === "files" || values.type === "volume")) {
       backups = getActiveBackupsByType(values.type);
     } else {
       backups = getAllActiveBackups();
@@ -95,15 +92,7 @@ function printTable(backups: BackupRecord[], verbose: boolean): void {
   if (verbose) {
     // Verbose table with backup IDs
     const widths = [36, 7, 10, 19, 12, 6, 16];
-    const headers = [
-      "ID",
-      "Type",
-      "Schedule",
-      "Created",
-      "Size",
-      "Files",
-      "Status",
-    ];
+    const headers = ["ID", "Type", "Schedule", "Created", "Size", "Files", "Status"];
 
     ui.step("Backups:");
     console.log(formatTableRow(headers, widths));
@@ -122,8 +111,7 @@ function printTable(backups: BackupRecord[], verbose: boolean): void {
         : "";
       const status = [localStatus, s3Status].filter(Boolean).join(", ");
 
-      const typeLabel =
-        backup.backup_type === "volume" ? color.cyan("volume") : "files";
+      const typeLabel = backup.backup_type === "volume" ? color.cyan("volume") : "files";
 
       console.log(
         formatTableRow(
@@ -150,8 +138,7 @@ function printTable(backups: BackupRecord[], verbose: boolean): void {
     console.log(formatTableSeparator(widths));
 
     for (const backup of backups) {
-      const typeLabel =
-        backup.backup_type === "volume" ? color.cyan("volume") : "files";
+      const typeLabel = backup.backup_type === "volume" ? color.cyan("volume") : "files";
 
       // For volume backups, show volume name instead of archive name if available
       const displayName =
@@ -174,11 +161,7 @@ function printTable(backups: BackupRecord[], verbose: boolean): void {
     }
   }
 
-  console.log(
-    formatTableSeparator(
-      verbose ? [36, 7, 10, 19, 12, 6, 16] : [45, 7, 10, 19, 12],
-    ),
-  );
+  console.log(formatTableSeparator(verbose ? [36, 7, 10, 19, 12, 6, 16] : [45, 7, 10, 19, 12]));
 }
 
 function printCsv(backups: BackupRecord[]): void {

@@ -136,18 +136,14 @@ describe("docker volume mocked behavior", () => {
   });
 
   test("volumeExists returns boolean", async () => {
-    const mockExists = mock((name: string) =>
-      Promise.resolve(name === "exists"),
-    );
+    const mockExists = mock((name: string) => Promise.resolve(name === "exists"));
 
     expect(await mockExists("exists")).toBe(true);
     expect(await mockExists("missing")).toBe(false);
   });
 
   test("isVolumeInUse returns boolean", async () => {
-    const mockInUse = mock((name: string) =>
-      Promise.resolve(name === "in_use_volume"),
-    );
+    const mockInUse = mock((name: string) => Promise.resolve(name === "in_use_volume"));
 
     expect(await mockInUse("in_use_volume")).toBe(true);
     expect(await mockInUse("idle_volume")).toBe(false);

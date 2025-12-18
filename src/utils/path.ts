@@ -12,10 +12,7 @@ export function isPathWithinDir(filePath: string, allowedDir: string): boolean {
   const normalizedPath = path.resolve(filePath);
   const normalizedDir = path.resolve(allowedDir);
 
-  return (
-    normalizedPath.startsWith(normalizedDir + path.sep) ||
-    normalizedPath === normalizedDir
-  );
+  return normalizedPath.startsWith(normalizedDir + path.sep) || normalizedPath === normalizedDir;
 }
 
 /**

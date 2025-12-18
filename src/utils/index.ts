@@ -15,15 +15,7 @@ export {
 export { formatBytes, formatDuration } from "./format";
 export type { LogLevel } from "./logger";
 // Logger
-export {
-  debug,
-  error,
-  getLogLevel,
-  info,
-  logger,
-  setLogLevel,
-  warn,
-} from "./logger";
+export { debug, error, getLogLevel, info, logger, setLogLevel, warn } from "./logger";
 export type { ParsedArchiveName } from "./naming";
 // Naming utilities
 export {

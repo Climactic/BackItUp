@@ -28,9 +28,7 @@ export function formatSummary(items: SummaryItem[]): string {
 }
 
 export function formatTableRow(columns: string[], widths: number[]): string {
-  return columns
-    .map((col, i) => col.padEnd(widths[i] ?? 0))
-    .join(color.dim(" │ "));
+  return columns.map((col, i) => col.padEnd(widths[i] ?? 0)).join(color.dim(" │ "));
 }
 
 export function formatTableSeparator(widths: number[]): string {

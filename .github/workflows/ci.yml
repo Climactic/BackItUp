@@ -22,7 +22,7 @@ jobs:
         run: bunx tsc --noEmit
 
       - name: Lint
-        run: bun run check
+        run: bun run lint
 
       - name: Test
         run: bun test

@@ -9,10 +9,7 @@ import { ConfigError } from "./validator";
 /**
  * Resolve relative paths in config to absolute paths
  */
-export function resolvePaths(
-  config: BackitupConfig,
-  configPath: string,
-): BackitupConfig {
+export function resolvePaths(config: BackitupConfig, configPath: string): BackitupConfig {
   const configDir = path.dirname(path.resolve(configPath));
 
   // Resolve database path
@@ -47,9 +44,7 @@ export function getSourcesForSchedule(
   return sourceNames.map((name) => {
     const source = config.sources[name];
     if (!source) {
-      throw new ConfigError(
-        `Source "${name}" referenced by schedule "${scheduleName}" not found`,
-      );
+      throw new ConfigError(`Source "${name}" referenced by schedule "${scheduleName}" not found`);
     }
     return source;
   });
@@ -58,10 +53,7 @@ export function getSourcesForSchedule(
 /**
  * Get source names for a specific schedule
  */
-export function getSourceNamesForSchedule(
-  config: BackitupConfig,
-  scheduleName: string,
-): string[] {
+export function getSourceNamesForSchedule(config: BackitupConfig, scheduleName: string): string[] {
   const schedule = config.schedules[scheduleName];
   if (!schedule) {
     throw new ConfigError(`Schedule "${scheduleName}" not found`);

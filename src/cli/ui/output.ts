@@ -7,8 +7,7 @@ import color from "picocolors";
 
 export { color };
 
-export const intro = (title: string) =>
-  p.intro(color.bgCyan(color.black(` ${title} `)));
+export const intro = (title: string) => p.intro(color.bgCyan(color.black(` ${title} `)));
 export const outro = (message: string) => p.outro(color.green(message));
 export const cancel = (message: string) => p.cancel(message);
 export const note = (message: string, title?: string) => p.note(message, title);

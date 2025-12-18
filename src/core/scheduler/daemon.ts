@@ -36,9 +36,7 @@ export class Scheduler {
         });
         logger.debug(`Parsed schedule "${name}": ${scheduleConfig.cron}`);
       } catch (error) {
-        logger.error(
-          `Failed to parse schedule "${name}": ${(error as Error).message}`,
-        );
+        logger.error(`Failed to parse schedule "${name}": ${(error as Error).message}`);
       }
     }
   }
@@ -94,8 +92,7 @@ export class Scheduler {
       try {
         const sources = getSourcesForSchedule(this.config, name);
         const scheduleConfig = this.config.schedules[name];
-        const sourceNames =
-          scheduleConfig?.sources ?? Object.keys(this.config.sources);
+        const sourceNames = scheduleConfig?.sources ?? Object.keys(this.config.sources);
 
         const result = await runBackup(this.config, {
           schedule: name,

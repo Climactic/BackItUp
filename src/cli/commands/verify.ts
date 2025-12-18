@@ -1,11 +1,6 @@
 import { parseArgs } from "node:util";
 import { findAndLoadConfig } from "../../config/loader";
-import {
-  getAllActiveBackups,
-  getBackupById,
-  initDatabase,
-  markBackupDeleted,
-} from "../../db";
+import { getAllActiveBackups, getBackupById, initDatabase, markBackupDeleted } from "../../db";
 import { getLocalFileChecksum, localFileExists } from "../../storage/local";
 import { initS3Client, s3ObjectExists } from "../../storage/s3";
 import type { BackupRecord } from "../../types";
@@ -182,10 +177,7 @@ export async function verifyCommand(args: string[]): Promise<number> {
   }
 }
 
-async function verifyBackup(
-  backup: BackupRecord,
-  s3Enabled: boolean,
-): Promise<VerifyResult> {
+async function verifyBackup(backup: BackupRecord, s3Enabled: boolean): Promise<VerifyResult> {
   const issues: string[] = [];
   let localOk: boolean | null = null;
   let s3Ok: boolean | null = null;
@@ -218,9 +210,7 @@ async function verifyBackup(
       s3Ok = exists;
 
       if (!exists) {
-        issues.push(
-          `S3 object missing: s3://${backup.s3_bucket}/${backup.s3_key}`,
-        );
+        issues.push(`S3 object missing: s3://${backup.s3_bucket}/${backup.s3_key}`);
       }
     } catch (error) {
       s3Ok = false;

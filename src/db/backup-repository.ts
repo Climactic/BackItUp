@@ -4,11 +4,7 @@
 
 import type { BackupInsert, BackupRecord } from "../types";
 import { getDatabase } from "./connection";
-import {
-  parseBackupRow,
-  type RawBackupRow,
-  serializeSourcePaths,
-} from "./mappers";
+import { parseBackupRow, type RawBackupRow, serializeSourcePaths } from "./mappers";
 
 export function insertBackup(backup: BackupInsert): BackupRecord {
   const database = getDatabase();
@@ -56,9 +52,7 @@ export function getBackupById(backupId: string): BackupRecord | null {
   return parseBackupRow(row);
 }
 
-export function getActiveBackupsBySchedule(
-  scheduleName: string,
-): BackupRecord[] {
+export function getActiveBackupsBySchedule(scheduleName: string): BackupRecord[] {
   const database = getDatabase();
   const rows = database
     .query(`
@@ -74,35 +68,24 @@ export function getActiveBackupsBySchedule(
 export function getAllActiveBackups(): BackupRecord[] {
   const database = getDatabase();
   const rows = database
-    .query(
-      `SELECT * FROM backups WHERE status = 'active' ORDER BY created_at DESC`,
-    )
+    .query(`SELECT * FROM backups WHERE status = 'active' ORDER BY created_at DESC`)
     .all() as RawBackupRow[];
 
   return rows.map(parseBackupRow);
 }
 
-export function updateBackupLocalPath(
-  backupId: string,
-  localPath: string,
-): void {
+export function updateBackupLocalPath(backupId: string, localPath: string): void {
   const database = getDatabase();
-  database.run(
-    "UPDATE backups SET local_path = ? WHERE backup_id = ?",
-    [localPath, backupId],
-  );
+  database.run("UPDATE backups SET local_path = ? WHERE backup_id = ?", [localPath, backupId]);
 }
 
-export function updateBackupS3(
-  backupId: string,
-  bucket: string,
-  key: string,
-): void {
+export function updateBackupS3(backupId: string, bucket: string, key: string): void {
   const database = getDatabase();
-  database.run(
-    "UPDATE backups SET s3_bucket = ?, s3_key = ? WHERE backup_id = ?",
-    [bucket, key, backupId],
-  );
+  database.run("UPDATE backups SET s3_bucket = ?, s3_key = ? WHERE backup_id = ?", [
+    bucket,
+    key,
+    backupId,
+  ]);
 }
 
 export function getActiveVolumeBackups(): BackupRecord[] {
@@ -116,9 +99,7 @@ export function getActiveVolumeBackups(): BackupRecord[] {
   return rows.map(parseBackupRow);
 }
 
-export function getActiveVolumeBackupsBySchedule(
-  scheduleName: string,
-): BackupRecord[] {
+export function getActiveVolumeBackupsBySchedule(scheduleName: string): BackupRecord[] {
   const database = getDatabase();
   const rows = database
     .query(`
@@ -131,9 +112,7 @@ export function getActiveVolumeBackupsBySchedule(
   return rows.map(parseBackupRow);
 }
 
-export function getActiveBackupsByType(
-  backupType: "files" | "volume",
-): BackupRecord[] {
+export function getActiveBackupsByType(backupType: "files" | "volume"): BackupRecord[] {
   const database = getDatabase();
   const rows = database
     .query(`
@@ -146,24 +125,19 @@ export function getActiveBackupsByType(
   return rows.map(parseBackupRow);
 }
 
-export function markBackupDeleted(
-  backupId: string,
-  deletionType: "local" | "s3" | "both",
-): void {
+export function markBackupDeleted(backupId: string, deletionType: "local" | "s3" | "both"): void {
   const database = getDatabase();
 
   if (deletionType === "local" || deletionType === "both") {
-    database.run(
-      "UPDATE backups SET local_deleted_at = datetime('now') WHERE backup_id = ?",
-      [backupId],
-    );
+    database.run("UPDATE backups SET local_deleted_at = datetime('now') WHERE backup_id = ?", [
+      backupId,
+    ]);
   }
 
   if (deletionType === "s3" || deletionType === "both") {
-    database.run(
-      "UPDATE backups SET s3_deleted_at = datetime('now') WHERE backup_id = ?",
-      [backupId],
-    );
+    database.run("UPDATE backups SET s3_deleted_at = datetime('now') WHERE backup_id = ?", [
+      backupId,
+    ]);
   }
 
   const backup = getBackupById(backupId);
@@ -172,10 +146,7 @@ export function markBackupDeleted(
     const s3Gone = !backup.s3_key || backup.s3_deleted_at;
 
     if (localGone && s3Gone) {
-      database.run(
-        "UPDATE backups SET status = 'deleted' WHERE backup_id = ?",
-        [backupId],
-      );
+      database.run("UPDATE backups SET status = 'deleted' WHERE backup_id = ?", [backupId]);
     }
   }
 }

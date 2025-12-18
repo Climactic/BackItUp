@@ -33,9 +33,7 @@ const validators: Record<string, Validator> = {
     }
     if (docker.enabled) {
       if (!Array.isArray(docker.volumes)) {
-        throw new ConfigError(
-          "docker.volumes must be an array when docker.enabled is true",
-        );
+        throw new ConfigError("docker.volumes must be an array when docker.enabled is true");
       }
       for (let i = 0; i < docker.volumes.length; i++) {
         const vol = docker.volumes[i] as Record<string, unknown>;
@@ -45,19 +43,10 @@ const validators: Record<string, Validator> = {
         if (!vol.name || typeof vol.name !== "string") {
           throw new ConfigError(`docker.volumes[${i}].name must be a string`);
         }
-        if (
-          vol.type !== undefined &&
-          vol.type !== "volume" &&
-          vol.type !== "compose"
-        ) {
-          throw new ConfigError(
-            `docker.volumes[${i}].type must be 'volume' or 'compose'`,
-          );
+        if (vol.type !== undefined && vol.type !== "volume" && vol.type !== "compose") {
+          throw new ConfigError(`docker.volumes[${i}].type must be 'volume' or 'compose'`);
         }
-        if (
-          vol.type === "compose" &&
-          (!vol.composePath || typeof vol.composePath !== "string")
-        ) {
+        if (vol.type === "compose" && (!vol.composePath || typeof vol.composePath !== "string")) {
           throw new ConfigError(
             `docker.volumes[${i}].composePath is required when type is 'compose'`,
           );
@@ -77,14 +66,8 @@ const validators: Record<string, Validator> = {
   },
 
   sources: (c) => {
-    if (
-      !c.sources ||
-      typeof c.sources !== "object" ||
-      Array.isArray(c.sources)
-    ) {
-      throw new ConfigError(
-        "Config must have a 'sources' object with named sources",
-      );
+    if (!c.sources || typeof c.sources !== "object" || Array.isArray(c.sources)) {
+      throw new ConfigError("Config must have a 'sources' object with named sources");
     }
     const entries = Object.entries(c.sources as Record<string, unknown>);
     if (entries.length === 0) {
@@ -116,9 +99,7 @@ const validators: Record<string, Validator> = {
       throw new ConfigError("local.enabled must be a boolean");
     }
     if (local.enabled && (!local.path || typeof local.path !== "string")) {
-      throw new ConfigError(
-        "local.path must be a string when local.enabled is true",
-      );
+      throw new ConfigError("local.path must be a string when local.enabled is true");
     }
   },
 
@@ -131,9 +112,7 @@ const validators: Record<string, Validator> = {
       throw new ConfigError("s3.enabled must be a boolean");
     }
     if (s3.enabled && (!s3.bucket || typeof s3.bucket !== "string")) {
-      throw new ConfigError(
-        "s3.bucket must be a string when s3.enabled is true",
-      );
+      throw new ConfigError("s3.bucket must be a string when s3.enabled is true");
     }
   },
 
@@ -141,9 +120,7 @@ const validators: Record<string, Validator> = {
     if (!c.schedules || typeof c.schedules !== "object") {
       throw new ConfigError("Config must have a 'schedules' section");
     }
-    for (const [name, schedule] of Object.entries(
-      c.schedules as Record<string, unknown>,
-    )) {
+    for (const [name, schedule] of Object.entries(c.schedules as Record<string, unknown>)) {
       validateSchedule(name, schedule, sourceNames ?? []);
     }
   },
@@ -152,18 +129,12 @@ const validators: Record<string, Validator> = {
     const local = c.local as Record<string, unknown> | undefined;
     const s3 = c.s3 as Record<string, unknown> | undefined;
     if (!local?.enabled && !s3?.enabled) {
-      throw new ConfigError(
-        "At least one storage (local or s3) must be enabled",
-      );
+      throw new ConfigError("At least one storage (local or s3) must be enabled");
     }
   },
 };
 
-function validateSchedule(
-  name: string,
-  schedule: unknown,
-  sourceNames: string[],
-): void {
+function validateSchedule(name: string, schedule: unknown, sourceNames: string[]): void {
   if (!schedule || typeof schedule !== "object") {
     throw new ConfigError(`schedules.${name} must be an object`);
   }
@@ -180,27 +151,19 @@ function validateSchedule(
 
   const retention = sched.retention as Record<string, unknown>;
   if (typeof retention.maxCount !== "number" || retention.maxCount < 1) {
-    throw new ConfigError(
-      `schedules.${name}.retention.maxCount must be a positive number`,
-    );
+    throw new ConfigError(`schedules.${name}.retention.maxCount must be a positive number`);
   }
   if (typeof retention.maxDays !== "number" || retention.maxDays < 1) {
-    throw new ConfigError(
-      `schedules.${name}.retention.maxDays must be a positive number`,
-    );
+    throw new ConfigError(`schedules.${name}.retention.maxDays must be a positive number`);
   }
 
   if (sched.sources !== undefined) {
     if (!Array.isArray(sched.sources)) {
-      throw new ConfigError(
-        `schedules.${name}.sources must be an array of source names`,
-      );
+      throw new ConfigError(`schedules.${name}.sources must be an array of source names`);
     }
     for (const sourceName of sched.sources as string[]) {
       if (typeof sourceName !== "string") {
-        throw new ConfigError(
-          `schedules.${name}.sources must contain only strings`,
-        );
+        throw new ConfigError(`schedules.${name}.sources must contain only strings`);
       }
       if (!sourceNames.includes(sourceName)) {
         throw new ConfigError(
@@ -214,9 +177,7 @@ function validateSchedule(
 /**
  * Validate a configuration object
  */
-export function validateConfig(
-  config: unknown,
-): asserts config is BackitupConfig {
+export function validateConfig(config: unknown): asserts config is BackitupConfig {
   if (!config || typeof config !== "object") {
     throw new ConfigError("Config must be an object");
   }

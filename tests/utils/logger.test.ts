@@ -1,13 +1,5 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
-import {
-  debug,
-  error,
-  getLogLevel,
-  info,
-  logger,
-  setLogLevel,
-  warn,
-} from "../../src/utils/logger";
+import { debug, error, getLogLevel, info, logger, setLogLevel, warn } from "../../src/utils/logger";
 
 describe("logger", () => {
   let originalLevel: ReturnType<typeof getLogLevel>;

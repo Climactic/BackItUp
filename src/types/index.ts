@@ -37,9 +37,4 @@ export type {
   DeletionType,
 } from "./database";
 // Storage types
-export type {
-  IStorageProvider,
-  SaveResult,
-  StorageLocation,
-  StorageType,
-} from "./storage";
+export type { IStorageProvider, SaveResult, StorageLocation, StorageType } from "./storage";

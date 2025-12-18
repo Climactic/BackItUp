@@ -2,12 +2,12 @@
 
 import * as p from "@clack/prompts";
 import color from "picocolors";
+import pkg from "../package.json";
 import { backupCommand } from "./cli/commands/backup";
 import { cleanupCommand } from "./cli/commands/cleanup";
 import { listCommand } from "./cli/commands/list";
 import { startCommand } from "./cli/commands/start";
 import { verifyCommand } from "./cli/commands/verify";
-import pkg from "../package.json";
 
 const VERSION = pkg.version;
 
@@ -113,9 +113,7 @@ async function main(): Promise<number> {
 
     default:
       console.error(`${color.red("Error:")} Unknown command: ${command}`);
-      console.error(
-        `Run ${color.cyan("backitup --help")} for usage information.`,
-      );
+      console.error(`Run ${color.cyan("backitup --help")} for usage information.`);
       return 1;
   }
 }

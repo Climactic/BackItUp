@@ -35,9 +35,7 @@ export async function cleanupCommand(args: string[]): Promise<number> {
     // Validate schedule if specified
     if (values.schedule && !config.schedules[values.schedule]) {
       ui.error(`Unknown schedule: ${values.schedule}`);
-      ui.info(
-        `Available schedules: ${Object.keys(config.schedules).join(", ")}`,
-      );
+      ui.info(`Available schedules: ${Object.keys(config.schedules).join(", ")}`);
       return 1;
     }
 
@@ -57,11 +55,8 @@ export async function cleanupCommand(args: string[]): Promise<number> {
     // Show what will be deleted
     ui.step(`Found ${preview.deletions.length} backup(s) to delete:`);
     for (const deletion of preview.deletions) {
-      const reason =
-        deletion.reason === "retention_count" ? "count limit" : "age limit";
-      ui.message(
-        `  ${color.dim("•")} ${deletion.archiveName} ${color.dim(`(${reason})`)}`,
-      );
+      const reason = deletion.reason === "retention_count" ? "count limit" : "age limit";
+      ui.message(`  ${color.dim("•")} ${deletion.archiveName} ${color.dim(`(${reason})`)}`);
     }
 
     // Confirm deletion unless --force or --dry-run
@@ -100,15 +95,10 @@ export async function cleanupCommand(args: string[]): Promise<number> {
       if (result.deletions.length > 0) {
         ui.step("Deletions:");
         for (const deletion of result.deletions) {
-          const status = deletion.success
-            ? color.green("OK")
-            : color.red("FAILED");
-          const reason =
-            deletion.reason === "retention_count" ? "count limit" : "age limit";
+          const status = deletion.success ? color.green("OK") : color.red("FAILED");
+          const reason = deletion.reason === "retention_count" ? "count limit" : "age limit";
 
-          ui.message(
-            `  [${status}] ${deletion.archiveName} ${color.dim(`(${reason})`)}`,
-          );
+          ui.message(`  [${status}] ${deletion.archiveName} ${color.dim(`(${reason})`)}`);
 
           if (deletion.error) {
             ui.error(`         ${deletion.error}`);

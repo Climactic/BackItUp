@@ -3,20 +3,10 @@
  */
 
 import { getSourcesForSchedule } from "../../config/loader";
-import {
-  initDatabase,
-  insertBackup,
-  updateBackupLocalPath,
-  updateBackupS3,
-} from "../../db";
+import { initDatabase, insertBackup, updateBackupLocalPath, updateBackupS3 } from "../../db";
 import { saveToLocal } from "../../storage/local";
 import { buildS3Key, initS3Client, uploadToS3 } from "../../storage/s3";
-import type {
-  BackitupConfig,
-  BackupInsert,
-  SourceConfig,
-  VolumeBackupResult,
-} from "../../types";
+import type { BackitupConfig, BackupInsert, SourceConfig, VolumeBackupResult } from "../../types";
 import { generateUUID } from "../../utils/crypto";
 import { logger } from "../../utils/logger";
 import { formatBytes, formatDuration } from "../../utils/naming";
@@ -26,10 +16,7 @@ import { backupAllVolumes, cleanupVolumeBackups } from "./volume-backup";
 /**
  * Determine S3 folder for file backups based on source configs and names.
  */
-export function getSourceFolder(
-  sources: SourceConfig[],
-  sourceNames: string[],
-): string {
+export function getSourceFolder(sources: SourceConfig[], sourceNames: string[]): string {
   // If single source with custom s3Prefix, use it
   if (sources.length === 1 && sources[0]?.s3Prefix) {
     return sources[0].s3Prefix;
@@ -90,9 +77,7 @@ export async function runBackup(
 
   const shouldBackupFiles = !options.volumesOnly;
   const shouldBackupVolumes =
-    !options.skipVolumes &&
-    config.docker?.enabled &&
-    config.docker.volumes.length > 0;
+    !options.skipVolumes && config.docker?.enabled && config.docker.volumes.length > 0;
 
   let archiveName = "";
   let sizeBytes = 0;
@@ -104,8 +89,7 @@ export async function runBackup(
 
   // Backup files (unless volumesOnly)
   if (shouldBackupFiles) {
-    const sources =
-      options.sources ?? getSourcesForSchedule(config, options.schedule);
+    const sources = options.sources ?? getSourcesForSchedule(config, options.schedule);
     const sourceNames =
       options.sourceNames ??
       (() => {
@@ -174,9 +158,7 @@ export async function runBackup(
     } else {
       logger.info("[DRY RUN] Would save archive but not actually saving");
       await cleanupTempArchive(archiveResult.archivePath);
-      localPath = useLocal
-        ? `${config.local.path}/${archiveResult.archiveName}`
-        : null;
+      localPath = useLocal ? `${config.local.path}/${archiveResult.archiveName}` : null;
       s3Bucket = useS3 ? config.s3.bucket : null;
       s3Key = useS3
         ? buildS3Key(
@@ -238,10 +220,7 @@ export async function runBackup(
             updateBackupS3(volumeBackupId, s3Result.bucket, s3Result.key);
           }
         } catch (error) {
-          logger.error(
-            `Failed to save volume backup ${volResult.volumeName}:`,
-            error,
-          );
+          logger.error(`Failed to save volume backup ${volResult.volumeName}:`, error);
         }
 
         volumeBackups.push(volResult);
@@ -250,9 +229,7 @@ export async function runBackup(
       // Cleanup temp volume files
       await cleanupVolumeBackups(volumeResults);
     } else {
-      logger.info(
-        "[DRY RUN] Would backup Docker volumes but not actually saving",
-      );
+      logger.info("[DRY RUN] Would backup Docker volumes but not actually saving");
       volumeBackups.push(...volumeResults.volumes);
       await cleanupVolumeBackups(volumeResults);
     }

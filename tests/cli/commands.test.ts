@@ -1,11 +1,4 @@
-import {
-  afterAll,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  test,
-} from "bun:test";
+import { afterAll, beforeAll, beforeEach, describe, expect, test } from "bun:test";
 import * as os from "node:os";
 import * as path from "node:path";
 import { $ } from "bun";
@@ -149,13 +142,10 @@ schedules:
 
   describe("backup command", () => {
     test("runs backup with schedule flag", async () => {
-      const proc = Bun.spawn(
-        ["bun", cliPath, "backup", "-c", configPath, "-s", "manual"],
-        {
-          stdout: "pipe",
-          stderr: "pipe",
-        },
-      );
+      const proc = Bun.spawn(["bun", cliPath, "backup", "-c", configPath, "-s", "manual"], {
+        stdout: "pipe",
+        stderr: "pipe",
+      });
       const stdout = await new Response(proc.stdout).text();
       const exitCode = await proc.exited;
 
@@ -166,16 +156,7 @@ schedules:
 
     test("runs backup with dry-run", async () => {
       const proc = Bun.spawn(
-        [
-          "bun",
-          cliPath,
-          "backup",
-          "-c",
-          configPath,
-          "-s",
-          "manual",
-          "--dry-run",
-        ],
+        ["bun", cliPath, "backup", "-c", configPath, "-s", "manual", "--dry-run"],
         {
           stdout: "pipe",
           stderr: "pipe",
@@ -197,30 +178,22 @@ schedules:
         await $`rm -f ${path.join(backupDir, f)}`.quiet();
       }
 
-      const proc = Bun.spawn(
-        ["bun", cliPath, "backup", "-c", configPath, "-s", "manual"],
-        {
-          stdout: "pipe",
-          stderr: "pipe",
-        },
-      );
+      const proc = Bun.spawn(["bun", cliPath, "backup", "-c", configPath, "-s", "manual"], {
+        stdout: "pipe",
+        stderr: "pipe",
+      });
       await proc.exited;
 
       // Check that a backup file was created
-      const files = await Array.fromAsync(
-        new Bun.Glob("*.tar.gz").scan({ cwd: backupDir }),
-      );
+      const files = await Array.fromAsync(new Bun.Glob("*.tar.gz").scan({ cwd: backupDir }));
       expect(files.length).toBeGreaterThan(0);
     });
 
     test("rejects unknown schedule", async () => {
-      const proc = Bun.spawn(
-        ["bun", cliPath, "backup", "-c", configPath, "-s", "nonexistent"],
-        {
-          stdout: "pipe",
-          stderr: "pipe",
-        },
-      );
+      const proc = Bun.spawn(["bun", cliPath, "backup", "-c", configPath, "-s", "nonexistent"], {
+        stdout: "pipe",
+        stderr: "pipe",
+      });
       const stdout = await new Response(proc.stdout).text();
       const exitCode = await proc.exited;
 
@@ -232,13 +205,10 @@ schedules:
   describe("list command", () => {
     beforeEach(async () => {
       // Ensure at least one backup exists
-      const proc = Bun.spawn(
-        ["bun", cliPath, "backup", "-c", configPath, "-s", "manual"],
-        {
-          stdout: "pipe",
-          stderr: "pipe",
-        },
-      );
+      const proc = Bun.spawn(["bun", cliPath, "backup", "-c", configPath, "-s", "manual"], {
+        stdout: "pipe",
+        stderr: "pipe",
+      });
       await proc.exited;
     });
 
@@ -255,13 +225,10 @@ schedules:
     });
 
     test("lists backups in JSON format", async () => {
-      const proc = Bun.spawn(
-        ["bun", cliPath, "list", "-c", configPath, "--format", "json"],
-        {
-          stdout: "pipe",
-          stderr: "pipe",
-        },
-      );
+      const proc = Bun.spawn(["bun", cliPath, "list", "-c", configPath, "--format", "json"], {
+        stdout: "pipe",
+        stderr: "pipe",
+      });
       const stdout = await new Response(proc.stdout).text();
       const exitCode = await proc.exited;
 
@@ -276,36 +243,21 @@ schedules:
     });
 
     test("lists backups in CSV format", async () => {
-      const proc = Bun.spawn(
-        ["bun", cliPath, "list", "-c", configPath, "--format", "csv"],
-        {
-          stdout: "pipe",
-          stderr: "pipe",
-        },
-      );
+      const proc = Bun.spawn(["bun", cliPath, "list", "-c", configPath, "--format", "csv"], {
+        stdout: "pipe",
+        stderr: "pipe",
+      });
       const stdout = await new Response(proc.stdout).text();
       const exitCode = await proc.exited;
 
       expect(exitCode).toBe(0);
       // Should have header row (includes backup_type and volume_name from Docker volume support)
-      expect(stdout).toContain(
-        "backup_id,backup_type,schedule_name,archive_name",
-      );
+      expect(stdout).toContain("backup_id,backup_type,schedule_name,archive_name");
     });
 
     test("limits results with -n flag", async () => {
       const proc = Bun.spawn(
-        [
-          "bun",
-          cliPath,
-          "list",
-          "-c",
-          configPath,
-          "--format",
-          "json",
-          "-n",
-          "1",
-        ],
+        ["bun", cliPath, "list", "-c", configPath, "--format", "json", "-n", "1"],
         {
           stdout: "pipe",
           stderr: "pipe",
@@ -323,24 +275,18 @@ schedules:
   describe("verify command", () => {
     beforeEach(async () => {
       // Ensure at least one backup exists
-      const proc = Bun.spawn(
-        ["bun", cliPath, "backup", "-c", configPath, "-s", "manual"],
-        {
-          stdout: "pipe",
-          stderr: "pipe",
-        },
-      );
+      const proc = Bun.spawn(["bun", cliPath, "backup", "-c", configPath, "-s", "manual"], {
+        stdout: "pipe",
+        stderr: "pipe",
+      });
       await proc.exited;
     });
 
     test("verifies all backups", async () => {
-      const proc = Bun.spawn(
-        ["bun", cliPath, "verify", "-c", configPath, "--all"],
-        {
-          stdout: "pipe",
-          stderr: "pipe",
-        },
-      );
+      const proc = Bun.spawn(["bun", cliPath, "verify", "-c", configPath, "--all"], {
+        stdout: "pipe",
+        stderr: "pipe",
+      });
       const stdout = await new Response(proc.stdout).text();
       await proc.exited;
 
@@ -363,13 +309,10 @@ schedules:
 
   describe("cleanup command", () => {
     test("runs cleanup with dry-run", async () => {
-      const proc = Bun.spawn(
-        ["bun", cliPath, "cleanup", "-c", configPath, "--dry-run"],
-        {
-          stdout: "pipe",
-          stderr: "pipe",
-        },
-      );
+      const proc = Bun.spawn(["bun", cliPath, "cleanup", "-c", configPath, "--dry-run"], {
+        stdout: "pipe",
+        stderr: "pipe",
+      });
       const stdout = await new Response(proc.stdout).text();
       const exitCode = await proc.exited;
 
@@ -378,13 +321,10 @@ schedules:
     });
 
     test("runs cleanup with force flag", async () => {
-      const proc = Bun.spawn(
-        ["bun", cliPath, "cleanup", "-c", configPath, "--force"],
-        {
-          stdout: "pipe",
-          stderr: "pipe",
-        },
-      );
+      const proc = Bun.spawn(["bun", cliPath, "cleanup", "-c", configPath, "--force"], {
+        stdout: "pipe",
+        stderr: "pipe",
+      });
       const stdout = await new Response(proc.stdout).text();
       const exitCode = await proc.exited;
 
@@ -396,15 +336,7 @@ schedules:
   describe("config validation", () => {
     test("errors on missing config", async () => {
       const proc = Bun.spawn(
-        [
-          "bun",
-          cliPath,
-          "backup",
-          "-c",
-          "/nonexistent/config.yaml",
-          "-s",
-          "manual",
-        ],
+        ["bun", cliPath, "backup", "-c", "/nonexistent/config.yaml", "-s", "manual"],
         {
           stdout: "pipe",
           stderr: "pipe",
@@ -421,13 +353,10 @@ schedules:
       const invalidConfigPath = path.join(tempDir, "invalid.yaml");
       await Bun.write(invalidConfigPath, "invalid: yaml: [[[");
 
-      const proc = Bun.spawn(
-        ["bun", cliPath, "backup", "-c", invalidConfigPath, "-s", "manual"],
-        {
-          stdout: "pipe",
-          stderr: "pipe",
-        },
-      );
+      const proc = Bun.spawn(["bun", cliPath, "backup", "-c", invalidConfigPath, "-s", "manual"], {
+        stdout: "pipe",
+        stderr: "pipe",
+      });
       const _stdout = await new Response(proc.stdout).text();
       const exitCode = await proc.exited;
 

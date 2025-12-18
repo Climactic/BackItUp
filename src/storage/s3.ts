@@ -3,12 +3,7 @@
  */
 
 import { S3Client } from "bun";
-import type {
-  IStorageProvider,
-  S3StorageConfig,
-  SaveResult,
-  StorageLocation,
-} from "../types";
+import type { IStorageProvider, S3StorageConfig, SaveResult, StorageLocation } from "../types";
 import { logger } from "../utils/logger";
 
 let globalS3Client: S3Client | null = null;
@@ -23,18 +18,13 @@ export class S3StorageProvider implements IStorageProvider {
 
   private createClient(): S3Client {
     const accessKeyId =
-      this.config.accessKeyId ??
-      process.env.S3_ACCESS_KEY_ID ??
-      process.env.AWS_ACCESS_KEY_ID;
+      this.config.accessKeyId ?? process.env.S3_ACCESS_KEY_ID ?? process.env.AWS_ACCESS_KEY_ID;
     const secretAccessKey =
       this.config.secretAccessKey ??
       process.env.S3_SECRET_ACCESS_KEY ??
       process.env.AWS_SECRET_ACCESS_KEY;
     const region =
-      this.config.region ??
-      process.env.S3_REGION ??
-      process.env.AWS_REGION ??
-      "us-east-1";
+      this.config.region ?? process.env.S3_REGION ?? process.env.AWS_REGION ?? "us-east-1";
     const endpoint = this.config.endpoint ?? process.env.S3_ENDPOINT;
 
     if (!accessKeyId || !secretAccessKey) {
@@ -67,9 +57,7 @@ export class S3StorageProvider implements IStorageProvider {
     // Verify upload
     const exists = await this.client.exists(key);
     if (!exists) {
-      throw new Error(
-        `S3 upload verification failed: s3://${this.config.bucket}/${key}`,
-      );
+      throw new Error(`S3 upload verification failed: s3://${this.config.bucket}/${key}`);
     }
 
     logger.info(`Uploaded to S3: s3://${this.config.bucket}/${key}`);
@@ -121,18 +109,10 @@ export class S3StorageProvider implements IStorageProvider {
 // Legacy function exports for backward compatibility
 export function initS3Client(config: S3StorageConfig): S3Client {
   const accessKeyId =
-    config.accessKeyId ??
-    process.env.S3_ACCESS_KEY_ID ??
-    process.env.AWS_ACCESS_KEY_ID;
+    config.accessKeyId ?? process.env.S3_ACCESS_KEY_ID ?? process.env.AWS_ACCESS_KEY_ID;
   const secretAccessKey =
-    config.secretAccessKey ??
-    process.env.S3_SECRET_ACCESS_KEY ??
-    process.env.AWS_SECRET_ACCESS_KEY;
-  const region =
-    config.region ??
-    process.env.S3_REGION ??
-    process.env.AWS_REGION ??
-    "us-east-1";
+    config.secretAccessKey ?? process.env.S3_SECRET_ACCESS_KEY ?? process.env.AWS_SECRET_ACCESS_KEY;
+  const region = config.region ?? process.env.S3_REGION ?? process.env.AWS_REGION ?? "us-east-1";
   const endpoint = config.endpoint ?? process.env.S3_ENDPOINT;
 
   if (!accessKeyId || !secretAccessKey) {
@@ -192,9 +172,7 @@ export async function uploadToS3(
 
   const exists = await client.exists(key);
   if (!exists) {
-    throw new Error(
-      `S3 upload verification failed: s3://${config.bucket}/${key}`,
-    );
+    throw new Error(`S3 upload verification failed: s3://${config.bucket}/${key}`);
   }
 
   logger.info(`Uploaded to S3: s3://${config.bucket}/${key}`);
@@ -205,9 +183,7 @@ export async function deleteFromS3(bucket: string, key: string): Promise<void> {
   const client = getS3Client();
   const exists = await client.exists(key);
   if (!exists) {
-    logger.warn(
-      `S3 object not found (already deleted?): s3://${bucket}/${key}`,
-    );
+    logger.warn(`S3 object not found (already deleted?): s3://${bucket}/${key}`);
     return;
   }
   await client.delete(key);
@@ -230,10 +206,7 @@ export async function getS3ObjectSize(key: string): Promise<number | null> {
   }
 }
 
-export function isKeyWithinPrefix(
-  key: string,
-  prefix: string | undefined,
-): boolean {
+export function isKeyWithinPrefix(key: string, prefix: string | undefined): boolean {
   if (!prefix) return true;
   const normalizedPrefix = prefix.endsWith("/") ? prefix : `${prefix}/`;
   return key.startsWith(normalizedPrefix);

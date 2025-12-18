@@ -111,9 +111,7 @@ schedules:
 
       const config = await loadConfig(configPath);
 
-      expect(config.database.path).toBe(
-        path.join(configDir, "data/backitup.db"),
-      );
+      expect(config.database.path).toBe(path.join(configDir, "data/backitup.db"));
       expect(config.local.path).toBe(path.join(configDir, "backups"));
     });
 
@@ -220,9 +218,7 @@ schedules:
       await Bun.write(configPath, "some content");
 
       await expect(loadConfig(configPath)).rejects.toThrow(ConfigError);
-      await expect(loadConfig(configPath)).rejects.toThrow(
-        "Unsupported config file format",
-      );
+      await expect(loadConfig(configPath)).rejects.toThrow("Unsupported config file format");
     });
 
     test("throws ConfigError for invalid YAML", async () => {
@@ -248,12 +244,12 @@ schedules:
     }
 
     test("throws for missing version", async () => {
-      const { version, ...noVersion } = validConfig;
+      const { version: _version, ...noVersion } = validConfig;
       await expect(writeAndLoad(noVersion)).rejects.toThrow("'version' field");
     });
 
     test("throws for missing database", async () => {
-      const { database, ...noDb } = validConfig;
+      const { database: _database, ...noDb } = validConfig;
       await expect(writeAndLoad(noDb)).rejects.toThrow("'database' section");
     });
 
@@ -263,7 +259,7 @@ schedules:
     });
 
     test("throws for missing sources", async () => {
-      const { sources, ...noSources } = validConfig;
+      const { sources: _sources, ...noSources } = validConfig;
       await expect(writeAndLoad(noSources)).rejects.toThrow("'sources' object");
     });
 
@@ -285,9 +281,7 @@ schedules:
         ...validConfig,
         sources: { app: { path: "/app", patterns: "not-array" } },
       };
-      await expect(writeAndLoad(config)).rejects.toThrow(
-        "sources.app.patterns must be an array",
-      );
+      await expect(writeAndLoad(config)).rejects.toThrow("sources.app.patterns must be an array");
     });
 
     test("throws for invalid source s3Prefix type", async () => {
@@ -295,9 +289,7 @@ schedules:
         ...validConfig,
         sources: { app: { path: "/app", s3Prefix: 123 } },
       };
-      await expect(writeAndLoad(config)).rejects.toThrow(
-        "sources.app.s3Prefix must be a string",
-      );
+      await expect(writeAndLoad(config)).rejects.toThrow("sources.app.s3Prefix must be a string");
     });
 
     test("accepts valid source s3Prefix", async () => {
@@ -319,41 +311,33 @@ schedules:
     });
 
     test("throws for missing local section", async () => {
-      const { local, ...noLocal } = validConfig;
+      const { local: _local, ...noLocal } = validConfig;
       await expect(writeAndLoad(noLocal)).rejects.toThrow("'local' section");
     });
 
     test("throws for missing local.enabled", async () => {
       const config = { ...validConfig, local: { path: "./backups" } };
-      await expect(writeAndLoad(config)).rejects.toThrow(
-        "local.enabled must be a boolean",
-      );
+      await expect(writeAndLoad(config)).rejects.toThrow("local.enabled must be a boolean");
     });
 
     test("throws for missing local.path when enabled", async () => {
       const config = { ...validConfig, local: { enabled: true } };
-      await expect(writeAndLoad(config)).rejects.toThrow(
-        "local.path must be a string",
-      );
+      await expect(writeAndLoad(config)).rejects.toThrow("local.path must be a string");
     });
 
     test("throws for missing s3 section", async () => {
-      const { s3, ...noS3 } = validConfig;
+      const { s3: _s3, ...noS3 } = validConfig;
       await expect(writeAndLoad(noS3)).rejects.toThrow("'s3' section");
     });
 
     test("throws for missing s3.bucket when enabled", async () => {
       const config = { ...validConfig, s3: { enabled: true } };
-      await expect(writeAndLoad(config)).rejects.toThrow(
-        "s3.bucket must be a string",
-      );
+      await expect(writeAndLoad(config)).rejects.toThrow("s3.bucket must be a string");
     });
 
     test("throws for missing schedules section", async () => {
-      const { schedules, ...noSchedules } = validConfig;
-      await expect(writeAndLoad(noSchedules)).rejects.toThrow(
-        "'schedules' section",
-      );
+      const { schedules: _schedules, ...noSchedules } = validConfig;
+      await expect(writeAndLoad(noSchedules)).rejects.toThrow("'schedules' section");
     });
 
     test("throws for missing schedule.cron", async () => {
@@ -363,9 +347,7 @@ schedules:
           daily: { retention: { maxCount: 7, maxDays: 30 } },
         },
       };
-      await expect(writeAndLoad(config)).rejects.toThrow(
-        "schedules.daily.cron",
-      );
+      await expect(writeAndLoad(config)).rejects.toThrow("schedules.daily.cron");
     });
 
     test("throws for missing schedule.retention", async () => {
@@ -375,9 +357,7 @@ schedules:
           daily: { cron: "0 2 * * *" },
         },
       };
-      await expect(writeAndLoad(config)).rejects.toThrow(
-        "schedules.daily.retention",
-      );
+      await expect(writeAndLoad(config)).rejects.toThrow("schedules.daily.retention");
     });
 
     test("throws for invalid retention.maxCount", async () => {
@@ -410,9 +390,7 @@ schedules:
         local: { enabled: false },
         s3: { enabled: false },
       };
-      await expect(writeAndLoad(config)).rejects.toThrow(
-        "At least one storage",
-      );
+      await expect(writeAndLoad(config)).rejects.toThrow("At least one storage");
     });
 
     test("throws for invalid schedule sources reference", async () => {
@@ -426,9 +404,7 @@ schedules:
           },
         },
       };
-      await expect(writeAndLoad(config)).rejects.toThrow(
-        'references unknown source "nonexistent"',
-      );
+      await expect(writeAndLoad(config)).rejects.toThrow('references unknown source "nonexistent"');
     });
 
     test("accepts valid schedule sources reference", async () => {
@@ -451,10 +427,7 @@ schedules:
     test("finds backitup.config.yaml", async () => {
       const testDir = path.join(tempDir, "find-yaml");
       await $`mkdir -p ${testDir}`;
-      await Bun.write(
-        path.join(testDir, "backitup.config.yaml"),
-        "version: 1.0",
-      );
+      await Bun.write(path.join(testDir, "backitup.config.yaml"), "version: 1.0");
 
       const found = findConfigFile(testDir);
       expect(found).toBe(path.join(testDir, "backitup.config.yaml"));
@@ -463,10 +436,7 @@ schedules:
     test("finds backitup.config.yml", async () => {
       const testDir = path.join(tempDir, "find-yml");
       await $`mkdir -p ${testDir}`;
-      await Bun.write(
-        path.join(testDir, "backitup.config.yml"),
-        "version: 1.0",
-      );
+      await Bun.write(path.join(testDir, "backitup.config.yml"), "version: 1.0");
 
       const found = findConfigFile(testDir);
       expect(found).toBe(path.join(testDir, "backitup.config.yml"));
@@ -475,10 +445,7 @@ schedules:
     test("finds backitup.config.json", async () => {
       const testDir = path.join(tempDir, "find-json");
       await $`mkdir -p ${testDir}`;
-      await Bun.write(
-        path.join(testDir, "backitup.config.json"),
-        '{"version": "1.0"}',
-      );
+      await Bun.write(path.join(testDir, "backitup.config.json"), '{"version": "1.0"}');
 
       const found = findConfigFile(testDir);
       expect(found).toBe(path.join(testDir, "backitup.config.json"));
@@ -495,14 +462,8 @@ schedules:
     test("prefers yaml over json", async () => {
       const testDir = path.join(tempDir, "multiple-configs");
       await $`mkdir -p ${testDir}`;
-      await Bun.write(
-        path.join(testDir, "backitup.config.yaml"),
-        "version: yaml",
-      );
-      await Bun.write(
-        path.join(testDir, "backitup.config.json"),
-        '{"version": "json"}',
-      );
+      await Bun.write(path.join(testDir, "backitup.config.yaml"), "version: yaml");
+      await Bun.write(path.join(testDir, "backitup.config.json"), '{"version": "json"}');
 
       const found = findConfigFile(testDir);
       expect(found).toBe(path.join(testDir, "backitup.config.yaml"));
@@ -547,9 +508,7 @@ schedules:
 
       try {
         process.chdir(emptyDir);
-        await expect(findAndLoadConfig()).rejects.toThrow(
-          "No config file found",
-        );
+        await expect(findAndLoadConfig()).rejects.toThrow("No config file found");
       } finally {
         process.chdir(originalCwd);
       }

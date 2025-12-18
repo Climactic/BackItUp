@@ -2,12 +2,7 @@
  * Cleanup orchestration
  */
 
-import {
-  getActiveBackupsBySchedule,
-  initDatabase,
-  logDeletion,
-  markBackupDeleted,
-} from "../../db";
+import { getActiveBackupsBySchedule, initDatabase, logDeletion, markBackupDeleted } from "../../db";
 import { deleteFromLocal, localFileExists } from "../../storage/local";
 import { deleteFromS3, initS3Client, s3ObjectExists } from "../../storage/s3";
 import type { BackitupConfig, DeletionReason } from "../../types";
@@ -53,9 +48,7 @@ export async function runCleanup(
     deletions: [],
   };
 
-  const schedulesToClean = options.schedule
-    ? [options.schedule]
-    : Object.keys(config.schedules);
+  const schedulesToClean = options.schedule ? [options.schedule] : Object.keys(config.schedules);
 
   for (const scheduleName of schedulesToClean) {
     const scheduleConfig = config.schedules[scheduleName];
@@ -81,16 +74,12 @@ export async function runCleanup(
     );
 
     for (const { backup, reason } of candidates) {
-      logger.debug(
-        `Checking backup: ${backup.archive_name} (reason: ${reason})`,
-      );
+      logger.debug(`Checking backup: ${backup.archive_name} (reason: ${reason})`);
 
       const validation = await validateDeletionCandidate(backup, config);
 
       if (!validation.valid) {
-        logger.error(
-          `Validation failed for ${backup.backup_id}: ${validation.errors.join(", ")}`,
-        );
+        logger.error(`Validation failed for ${backup.backup_id}: ${validation.errors.join(", ")}`);
         result.totalSkipped++;
         result.deletions.push({
           backupId: backup.backup_id,
@@ -105,15 +94,11 @@ export async function runCleanup(
       }
 
       if (validation.warnings.length > 0) {
-        logger.warn(
-          `Warnings for ${backup.backup_id}: ${validation.warnings.join(", ")}`,
-        );
+        logger.warn(`Warnings for ${backup.backup_id}: ${validation.warnings.join(", ")}`);
       }
 
       if (options.dryRun) {
-        logger.info(
-          `[DRY RUN] Would delete: ${backup.archive_name} (${reason})`,
-        );
+        logger.info(`[DRY RUN] Would delete: ${backup.archive_name} (${reason})`);
         result.deletions.push({
           backupId: backup.backup_id,
           archiveName: backup.archive_name,
@@ -184,13 +169,7 @@ async function executeDelete(
     }
 
     const deletionType =
-      localDeleted && s3Deleted
-        ? "both"
-        : localDeleted
-          ? "local"
-          : s3Deleted
-            ? "s3"
-            : "both";
+      localDeleted && s3Deleted ? "both" : localDeleted ? "local" : s3Deleted ? "s3" : "both";
     markBackupDeleted(backup.backup_id, deletionType);
 
     logDeletion({

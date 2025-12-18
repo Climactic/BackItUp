@@ -9,6 +9,18 @@ import { DEFAULT_CONFIG, deepMerge } from "./defaults";
 import { resolvePaths } from "./resolver";
 import { ConfigError, validateConfig } from "./validator";
 
+// Re-export inline config utilities
+export {
+  canRunWithoutConfigFile,
+  createConfigFromInlineOptions,
+  extractInlineOptions,
+  hasInlineOptions,
+  INLINE_CONFIG_OPTIONS,
+  type InlineConfigOptions,
+  type InlineValidationResult,
+  mergeInlineConfig,
+  validateInlineOptionsForConfigFreeMode,
+} from "./inline";
 // Re-export resolver functions for backward compatibility
 export { getSourceNamesForSchedule, getSourcesForSchedule } from "./resolver";
 export { ConfigError } from "./validator";
@@ -57,22 +69,14 @@ function parseConfigContent(content: string, ext: string): unknown {
     }
   }
 
-  throw new ConfigError(
-    `Unsupported config file format: ${ext}. Use .yaml, .yml, or .json`,
-  );
+  throw new ConfigError(`Unsupported config file format: ${ext}. Use .yaml, .yml, or .json`);
 }
 
 /**
  * Find a config file in the given directory
  */
-export function findConfigFile(
-  startDir: string = process.cwd(),
-): string | null {
-  const configNames = [
-    "backitup.config.yaml",
-    "backitup.config.yml",
-    "backitup.config.json",
-  ];
+export function findConfigFile(startDir: string = process.cwd()): string | null {
+  const configNames = ["backitup.config.yaml", "backitup.config.yml", "backitup.config.json"];
 
   for (const name of configNames) {
     const configPath = path.join(startDir, name);
@@ -87,9 +91,7 @@ export function findConfigFile(
 /**
  * Find and load a config file
  */
-export async function findAndLoadConfig(
-  configPath?: string,
-): Promise<BackitupConfig> {
+export async function findAndLoadConfig(configPath?: string): Promise<BackitupConfig> {
   if (configPath) {
     return loadConfig(configPath);
   }

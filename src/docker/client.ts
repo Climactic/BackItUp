@@ -58,11 +58,7 @@ export async function isDockerAvailable(): Promise<boolean> {
  * Get Docker version information
  */
 export async function getDockerVersion(): Promise<string | null> {
-  const result = await dockerRun([
-    "version",
-    "--format",
-    "{{.Server.Version}}",
-  ]);
+  const result = await dockerRun(["version", "--format", "{{.Server.Version}}"]);
   if (result.success) {
     return result.stdout;
   }

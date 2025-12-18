@@ -13,6 +13,7 @@ Glob patterns • tar.gz compression • Local + S3 storage • Docker volumes �
 [![Linux](https://img.shields.io/badge/Linux-FCC624?style=flat-square&logo=linux&logoColor=black)](https://github.com/climactic/backitup/releases)
 [![macOS](https://img.shields.io/badge/macOS-000000?style=flat-square&logo=apple&logoColor=white)](https://github.com/climactic/backitup/releases)
 [![Windows](https://img.shields.io/badge/Windows-0078D6?style=flat-square&logo=windows&logoColor=white)](https://github.com/climactic/backitup/releases)
+[![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)](https://github.com/climactic/backitup/pkgs/container/backitup)
 
 [![GitHub Sponsors](https://img.shields.io/badge/Sponsor-GitHub-ea4aaa?style=for-the-badge&logo=githubsponsors)](https://github.com/sponsors/Climactic)
 [![Ko-fi](https://img.shields.io/badge/Support-Ko--fi-ff5e5b?style=for-the-badge&logo=ko-fi)](https://ko-fi.com/ClimacticCo)
@@ -73,7 +74,10 @@ docker pull ghcr.io/climactic/backitup:latest
 
 ## ⚡ Quick Start
 
-**1.** Create `backitup.config.yaml` ([configuration reference](docs/configuration.md)):
+**1.** Create a config file ([configuration reference](docs/configuration.md)):
+
+<details>
+<summary><b>backitup.config.yaml</b> (click to expand)</summary>
 
 ```yaml
 version: "1.0"
@@ -108,6 +112,45 @@ schedules:
       maxCount: 7            # Keep max 7 backups
       maxDays: 14            # Delete after 14 days
 ```
+
+</details>
+
+<details>
+<summary><b>backitup.config.json</b> (click to expand)</summary>
+
+```json
+{
+  "version": "1.0",
+  "database": {
+    "path": "./data/backitup.db"
+  },
+  "sources": {
+    "app": {
+      "path": "/var/www/myapp",
+      "patterns": ["**/*.ts", "**/*.js", "!**/node_modules/**"]
+    }
+  },
+  "local": {
+    "enabled": true,
+    "path": "./backups"
+  },
+  "s3": {
+    "enabled": false,
+    "bucket": "my-backups"
+  },
+  "schedules": {
+    "daily": {
+      "cron": "0 2 * * *",
+      "retention": {
+        "maxCount": 7,
+        "maxDays": 14
+      }
+    }
+  }
+}
+```
+
+</details>
 
 **2.** Run:
 

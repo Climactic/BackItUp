@@ -1,6 +1,12 @@
 # Configuration Reference
 
-BackItUp uses a YAML configuration file. By default, it looks for `backitup.config.yaml` in the current directory.
+BackItUp supports both YAML and JSON configuration files. By default, it looks for these files in the current directory (in order):
+
+1. `backitup.config.yaml`
+2. `backitup.config.yml`
+3. `backitup.config.json`
+
+You can also specify a config file path with `-c, --config <path>`.
 
 ## Example Configuration
 
@@ -227,6 +233,8 @@ Docker volume backup configuration.
 
 ## Minimal Configuration
 
+### YAML
+
 ```yaml
 version: "1.0"
 
@@ -246,4 +254,32 @@ schedules:
     cron: "0 2 * * *"
     retention:
       maxCount: 7
+```
+
+### JSON
+
+```json
+{
+  "version": "1.0",
+  "database": {
+    "path": "./data/backitup.db"
+  },
+  "sources": {
+    "myapp": {
+      "path": "/path/to/backup"
+    }
+  },
+  "local": {
+    "enabled": true,
+    "path": "./backups"
+  },
+  "schedules": {
+    "daily": {
+      "cron": "0 2 * * *",
+      "retention": {
+        "maxCount": 7
+      }
+    }
+  }
+}
 ```

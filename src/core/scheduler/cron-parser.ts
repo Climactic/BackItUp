@@ -18,6 +18,14 @@ export interface ParsedCron {
 }
 
 export function parseCron(expression: string): ParsedCron {
+  // Validate that we have exactly 5 fields (standard cron format)
+  const fields = expression.trim().split(/\s+/);
+  if (fields.length !== 5) {
+    throw new Error(
+      `Invalid cron expression: "${expression}". Expected 5 fields, got ${fields.length}.`,
+    );
+  }
+
   const interval = CronExpressionParser.parse(expression);
   return { expression, interval };
 }

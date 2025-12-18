@@ -72,8 +72,7 @@ schedules:
       const result = await $`bun ${cliPath} --help`.text();
 
       expect(result).toContain("BackItUp");
-      expect(result).toContain("USAGE:");
-      expect(result).toContain("COMMANDS:");
+      expect(result).toContain("Commands");
       expect(result).toContain("start");
       expect(result).toContain("backup");
       expect(result).toContain("cleanup");
@@ -442,12 +441,12 @@ describe("CLI argument parsing", () => {
 
   test("handles short flags", async () => {
     const result = await $`bun ${cliPath} -h`.text();
-    expect(result).toContain("USAGE:");
+    expect(result).toContain("Commands");
   });
 
   test("handles long flags", async () => {
     const result = await $`bun ${cliPath} --help`.text();
-    expect(result).toContain("USAGE:");
+    expect(result).toContain("Commands");
   });
 
   test("handles combined short flags", async () => {

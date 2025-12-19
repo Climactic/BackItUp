@@ -4,8 +4,8 @@ FROM alpine:3
 ARG TARGETARCH
 ARG VERSION=latest
 
-# Install runtime dependencies
-RUN apk add --no-cache tar gzip ca-certificates curl
+# Install runtime dependencies (libstdc++ and libgcc required by Bun binaries)
+RUN apk add --no-cache tar gzip ca-certificates curl libstdc++ libgcc
 
 # Create non-root user
 RUN adduser -D -u 1000 backitup

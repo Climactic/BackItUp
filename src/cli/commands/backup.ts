@@ -81,7 +81,7 @@ export async function backupCommand(args: string[]): Promise<number> {
 
     if (!schedule) {
       // Interactive mode - prompt for schedule
-      ui.intro("backitup backup");
+      ui.banner("backup");
 
       const scheduleOptions = [
         { value: "manual", label: "manual", hint: "One-time backup" },
@@ -114,7 +114,7 @@ export async function backupCommand(args: string[]): Promise<number> {
 
     // Show intro if we didn't already (non-interactive mode)
     if (values.schedule) {
-      ui.intro("backitup backup");
+      ui.banner("backup");
     }
 
     // Run backup with spinner

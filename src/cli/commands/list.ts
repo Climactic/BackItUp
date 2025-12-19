@@ -66,7 +66,7 @@ export async function listCommand(args: string[]): Promise<number> {
         return 0;
       default:
         // Show intro for table format
-        ui.intro("backitup list");
+        ui.banner("list");
 
         if (backups.length === 0) {
           ui.info("No backups found");

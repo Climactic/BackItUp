@@ -68,7 +68,7 @@ export async function startCommand(args: string[]): Promise<number> {
       }
     }
 
-    ui.intro("backitup scheduler");
+    ui.banner("start");
 
     if (Object.keys(config.schedules).length === 0) {
       ui.error("No schedules configured");

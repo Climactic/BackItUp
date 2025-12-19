@@ -151,11 +151,43 @@ Named backup sources. Each source defines files to include in backups.
 | `path`     | string   | Yes      | Base directory path                 |
 | `patterns` | string[] | No       | Glob patterns (default: `["**/*"]`) |
 
-**Glob Pattern Examples:**
+**Glob Pattern Syntax:**
 
-- `**/*.ts` - All TypeScript files
-- `!**/node_modules/**` - Exclude node_modules
-- `src/**` - Everything in src directory
+Patterns use glob syntax to include or exclude files. Patterns starting with `!` are exclusions.
+
+**Important:** Patterns are matched relative to the source `path`, not as absolute paths. If your source path is `/data`, a file at `/data/logs/app.log` would be matched against `logs/app.log`.
+
+**Examples:**
+
+| Pattern | Description |
+| ------- | ----------- |
+| `**/*` | All files (default) |
+| `**/*.ts` | All TypeScript files |
+| `src/**` | Everything in src directory |
+| `!**/node_modules/**` | Exclude node_modules anywhere |
+| `!logs/**` | Exclude the logs directory |
+| `!*.log` | Exclude .log files in root only |
+| `!**/*.log` | Exclude all .log files |
+
+**Common mistake:** Using absolute paths in exclude patterns.
+
+```yaml
+# Wrong - patterns are relative to path, not absolute
+sources:
+  mydata:
+    path: "/data"
+    patterns:
+      - "**/*"
+      - "!/data/cache/**"  # Won't work!
+
+# Correct - use relative paths
+sources:
+  mydata:
+    path: "/data"
+    patterns:
+      - "**/*"
+      - "!cache/**"  # Excludes /data/cache/
+```
 
 ### `local`
 

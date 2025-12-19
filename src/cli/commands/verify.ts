@@ -43,7 +43,7 @@ export async function verifyCommand(args: string[]): Promise<number> {
     const config = await findAndLoadConfig(values.config);
     await initDatabase(config.database.path);
 
-    ui.intro("backitup verify");
+    ui.banner("verify");
 
     // Initialize S3 if enabled
     if (config.s3.enabled) {

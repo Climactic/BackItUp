@@ -30,7 +30,7 @@ export async function cleanupCommand(args: string[]): Promise<number> {
   try {
     const config = await findAndLoadConfig(values.config);
 
-    ui.intro("backitup cleanup");
+    ui.banner("cleanup");
 
     // Validate schedule if specified
     if (values.schedule && !config.schedules[values.schedule]) {

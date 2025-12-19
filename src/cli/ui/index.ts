@@ -7,17 +7,21 @@ export type { SummaryItem } from "./formatters";
 export { formatSummary, formatTableRow, formatTableSeparator, TABLE_WIDTHS } from "./formatters";
 // Output
 export {
+  banner,
   cancel,
   color,
   error,
   info,
   intro,
+  LINKS,
+  LOGO,
   message,
   note,
   outro,
   spinner,
   step,
   success,
+  VERSION,
   warn,
 } from "./output";
 // Prompts
@@ -28,6 +32,7 @@ import * as output from "./output";
 import * as prompts from "./prompts";
 
 export const ui = {
+  banner: output.banner,
   intro: output.intro,
   outro: output.outro,
   cancel: output.cancel,

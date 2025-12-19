@@ -471,6 +471,7 @@ services:
   backitup:
     image: ghcr.io/climactic/backitup:latest
     command: start
+    user: root  # Required for reading files with restrictive permissions
     volumes:
       - ./config:/config              # Config + database
       - ./data:/data:ro               # Source files (read-only)
@@ -480,6 +481,53 @@ services:
       - S3_ACCESS_KEY_ID=key
       - S3_SECRET_ACCESS_KEY=secret
     restart: unless-stopped
+```
+
+### File Permissions
+
+The Docker image runs as a non-root user (UID 1000) by default. If you're backing up files with restrictive permissions (e.g., SSH keys, database files), you have two options:
+
+> **Tip:** Always mount source data directories as read-only (`:ro`) to prevent accidental modifications during backup.
+
+**Option 1: Run as root (simplest)**
+
+```yaml
+services:
+  backitup:
+    image: ghcr.io/climactic/backitup:latest
+    user: root
+    # ...
+```
+
+**Option 2: Match the host user**
+
+If your files are owned by a specific user, run the container as that user:
+
+```yaml
+services:
+  backitup:
+    image: ghcr.io/climactic/backitup:latest
+    user: "1000:1000"  # Match the UID:GID of file owner
+    # ...
+```
+
+### One-time vs Scheduled Backups
+
+Use `command: start` for the long-running scheduler daemon with `restart: unless-stopped`.
+
+For one-time backups (e.g., triggered by cron or CI), use `restart: on-failure` to prevent the container from restarting indefinitely after a successful backup:
+
+```yaml
+services:
+  backitup:
+    image: ghcr.io/climactic/backitup:latest
+    command: backup -s manual
+    user: root
+    volumes:
+      - ./config:/config
+      - ./data:/data:ro
+      - ./backups:/backups
+    restart: on-failure  # Don't restart after successful backup
 ```
 
 ### systemd

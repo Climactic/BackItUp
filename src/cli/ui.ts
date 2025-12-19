@@ -4,6 +4,7 @@
 
 export type { SummaryItem } from "./ui/index";
 export {
+  banner,
   cancel,
   color,
   confirm,
@@ -14,6 +15,8 @@ export {
   info,
   intro,
   isCancel,
+  LINKS,
+  LOGO,
   message,
   multiselect,
   note,
@@ -25,5 +28,6 @@ export {
   TABLE_WIDTHS,
   text,
   ui,
+  VERSION,
   warn,
 } from "./ui/index";

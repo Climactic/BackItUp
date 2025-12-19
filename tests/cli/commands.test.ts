@@ -150,7 +150,8 @@ schedules:
       const exitCode = await proc.exited;
 
       expect(exitCode).toBe(0);
-      expect(stdout).toContain("backitup backup");
+      expect(stdout).toContain("BackItUp");
+      expect(stdout).toContain("backup");
       expect(stdout).toContain("Backup complete");
     });
 
@@ -221,7 +222,8 @@ schedules:
       const exitCode = await proc.exited;
 
       expect(exitCode).toBe(0);
-      expect(stdout).toContain("backitup list");
+      expect(stdout).toContain("BackItUp");
+      expect(stdout).toContain("list");
     });
 
     test("lists backups in JSON format", async () => {
@@ -290,7 +292,8 @@ schedules:
       const stdout = await new Response(proc.stdout).text();
       await proc.exited;
 
-      expect(stdout).toContain("backitup verify");
+      expect(stdout).toContain("BackItUp");
+      expect(stdout).toContain("verify");
       expect(stdout).toContain("Verification");
     });
 
@@ -317,7 +320,8 @@ schedules:
       const exitCode = await proc.exited;
 
       expect(exitCode).toBe(0);
-      expect(stdout).toContain("backitup cleanup");
+      expect(stdout).toContain("BackItUp");
+      expect(stdout).toContain("cleanup");
     });
 
     test("runs cleanup with force flag", async () => {
@@ -329,7 +333,8 @@ schedules:
       const exitCode = await proc.exited;
 
       expect(exitCode).toBe(0);
-      expect(stdout).toContain("backitup cleanup");
+      expect(stdout).toContain("BackItUp");
+      expect(stdout).toContain("cleanup");
     });
   });
 

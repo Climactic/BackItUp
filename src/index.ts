@@ -1,23 +1,12 @@
 #!/usr/bin/env bun
 
 import * as p from "@clack/prompts";
-import color from "picocolors";
-import pkg from "../package.json";
 import { backupCommand } from "./cli/commands/backup";
 import { cleanupCommand } from "./cli/commands/cleanup";
 import { listCommand } from "./cli/commands/list";
 import { startCommand } from "./cli/commands/start";
 import { verifyCommand } from "./cli/commands/verify";
-
-const VERSION = pkg.version;
-
-const LOGO = String.raw`
- ______     ______     ______     __  __     __     ______   __  __     ______
-/\  == \   /\  __ \   /\  ___\   /\ \/ /    /\ \   /\__  _\ /\ \/\ \   /\  == \
-\ \  __<   \ \  __ \  \ \ \____  \ \  _"-.  \ \ \  \/_/\ \/ \ \ \_\ \  \ \  _-/
- \ \_____\  \ \_\ \_\  \ \_____\  \ \_\ \_\  \ \_\    \ \_\  \ \_____\  \ \_\
-  \/_____/   \/_/\/_/   \/_____/   \/_/\/_/   \/_/     \/_/   \/_____/   \/_/
-`;
+import { color, LINKS, LOGO, VERSION } from "./cli/ui";
 
 function printHelp(): void {
   console.log(color.bold(color.cyan(LOGO)));
@@ -48,12 +37,7 @@ backitup verify --all             ${color.dim("# Verify all backups")}`,
     "Examples",
   );
 
-  p.note(
-    `${color.cyan("GitHub:")}    https://github.com/climactic/backitup
-${color.cyan("Sponsors:")}  https://github.com/sponsors/Climactic
-${color.cyan("Ko-fi:")}     https://ko-fi.com/ClimacticCo`,
-    "Links",
-  );
+  p.note(LINKS, "Links");
 
   p.outro(`Run ${color.cyan("backitup <command> --help")} for command details`);
 }
@@ -62,12 +46,7 @@ function printVersion(): void {
   console.log(color.bold(color.cyan(LOGO)));
   p.intro(`${color.cyan("BackItUp")} ${color.dim(`v${VERSION}`)}`);
 
-  p.note(
-    `${color.cyan("GitHub:")}    https://github.com/climactic/backitup
-${color.cyan("Sponsors:")}  https://github.com/sponsors/Climactic
-${color.cyan("Ko-fi:")}     https://ko-fi.com/ClimacticCo`,
-    "Links",
-  );
+  p.note(LINKS, "Links");
 
   p.outro(`Run ${color.cyan("backitup --help")} for usage`);
 }

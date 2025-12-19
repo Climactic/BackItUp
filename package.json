@@ -1,6 +1,6 @@
 {
   "name": "@climactic/backitup",
-  "version": "1.0.0-rc.1",
+  "version": "1.0.0",
   "description": "Secure backup utility with glob patterns, tar.gz archives, local + S3 storage, and safe cleanup",
   "author": {
     "name": "Climactic",

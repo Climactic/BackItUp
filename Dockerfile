@@ -1,14 +1,16 @@
 # Runtime stage - uses pre-built binary from GitHub Releases
-FROM alpine:3
+FROM debian:stable-slim
 
 ARG TARGETARCH
 ARG VERSION
 
-# Install runtime dependencies (libstdc++ and libgcc required by Bun binaries)
-RUN apk add --no-cache tar gzip ca-certificates curl libstdc++ libgcc
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    tar gzip ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
-RUN adduser -D -u 1000 backitup
+RUN useradd -m -u 1000 backitup
 
 # Create directories
 RUN mkdir -p /config /data /backups && \

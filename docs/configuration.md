@@ -159,15 +159,15 @@ Patterns use glob syntax to include or exclude files. Patterns starting with `!`
 
 **Examples:**
 
-| Pattern | Description |
-| ------- | ----------- |
-| `**/*` | All files (default) |
-| `**/*.ts` | All TypeScript files |
-| `src/**` | Everything in src directory |
-| `!**/node_modules/**` | Exclude node_modules anywhere |
-| `!logs/**` | Exclude the logs directory |
-| `!*.log` | Exclude .log files in root only |
-| `!**/*.log` | Exclude all .log files |
+| Pattern               | Description                     |
+| --------------------- | ------------------------------- |
+| `**/*`                | All files (default)             |
+| `**/*.ts`             | All TypeScript files            |
+| `src/**`              | Everything in src directory     |
+| `!**/node_modules/**` | Exclude node_modules anywhere   |
+| `!logs/**`            | Exclude the logs directory      |
+| `!*.log`              | Exclude .log files in root only |
+| `!**/*.log`           | Exclude all .log files          |
 
 **Common mistake:** Using absolute paths in exclude patterns.
 
@@ -266,12 +266,12 @@ Docker volume backup configuration.
 
 **Container Stop Settings (`containerStop`):**
 
-| Field               | Type    | Default | Description                               |
-| ------------------- | ------- | ------- | ----------------------------------------- |
-| `stopContainers`    | boolean | `false` | Stop containers before backup             |
-| `stopTimeout`       | number  | `30`    | Seconds to wait for graceful stop         |
-| `restartRetries`    | number  | `3`     | Number of restart attempts if fails       |
-| `restartRetryDelay` | number  | `1000`  | Milliseconds between restart retry        |
+| Field               | Type    | Default | Description                         |
+| ------------------- | ------- | ------- | ----------------------------------- |
+| `stopContainers`    | boolean | `false` | Stop containers before backup       |
+| `stopTimeout`       | number  | `30`    | Seconds to wait for graceful stop   |
+| `restartRetries`    | number  | `3`     | Number of restart attempts if fails |
+| `restartRetryDelay` | number  | `1000`  | Milliseconds between restart retry  |
 
 **Volume Entry:**
 

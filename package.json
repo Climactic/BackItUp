@@ -8,11 +8,11 @@
     "url": "https://climactic.co"
   },
   "funding": "https://github.com/sponsors/Climactic",
-  "type": "module",
-  "module": "src/index.ts",
   "bin": {
     "backitup": "./src/index.ts"
   },
+  "type": "module",
+  "module": "src/index.ts",
   "scripts": {
     "start": "bun run src/index.ts start",
     "dev": "bun --watch src/index.ts",

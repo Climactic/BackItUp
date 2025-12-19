@@ -17,6 +17,7 @@ Glob patterns • tar.gz compression • Local + S3 storage • Docker volumes �
 
 [![GitHub Sponsors](https://img.shields.io/badge/Sponsor-GitHub-ea4aaa?style=for-the-badge&logo=githubsponsors)](https://github.com/sponsors/Climactic)
 [![Ko-fi](https://img.shields.io/badge/Support-Ko--fi-ff5e5b?style=for-the-badge&logo=ko-fi)](https://ko-fi.com/ClimacticCo)
+[![Discord](https://img.shields.io/badge/Chat-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/QzpEuEraqK)
 
 </div>
 
@@ -168,13 +169,14 @@ backitup verify --all        # Verify integrity
 
 All commands support `-c, --config <path>` to specify a config file and `-h, --help` for detailed usage.
 
-| Command            | Description             | Docs                                   |
-| ------------------ | ----------------------- | -------------------------------------- |
-| `backitup backup`  | Create a backup         | [backup.md](docs/commands/backup.md)   |
-| `backitup start`   | Start scheduler daemon  | [start.md](docs/commands/start.md)     |
-| `backitup list`    | List existing backups   | [list.md](docs/commands/list.md)       |
-| `backitup cleanup` | Clean old backups       | [cleanup.md](docs/commands/cleanup.md) |
-| `backitup verify`  | Verify backup integrity | [verify.md](docs/commands/verify.md)   |
+| Command              | Description              | Docs                                       |
+| -------------------- | ------------------------ | ------------------------------------------ |
+| `backitup backup`    | Create a backup          | [backup.md](docs/commands/backup.md)       |
+| `backitup start`     | Start scheduler daemon   | [start.md](docs/commands/start.md)         |
+| `backitup list`      | List existing backups    | [list.md](docs/commands/list.md)           |
+| `backitup cleanup`   | Clean old backups        | [cleanup.md](docs/commands/cleanup.md)     |
+| `backitup verify`    | Verify backup integrity  | [verify.md](docs/commands/verify.md)       |
+| `backitup export-db` | Export the database file | [export-db.md](docs/commands/export-db.md) |
 
 ```bash
 backitup start                    # Start scheduler daemon
@@ -198,6 +200,8 @@ backitup list --format json       # Output as JSON or CSV
 backitup verify --all             # Verify all backup checksums
 backitup verify <backup-id>       # Verify specific backup
 backitup verify --all --fix       # Update DB for missing files
+
+backitup export-db ./backup.db    # Export database to file
 ```
 
 ---
@@ -360,6 +364,7 @@ backitup backup -s daily --docker-volume postgres_data \
 ```
 
 **Important notes:**
+
 - Containers with `restart: always` or `restart: unless-stopped` policies may auto-restart after being stopped. BackItUp detects this and logs a warning.
 - If a container fails to restart after all retries, the backup still succeeds but a warning is logged.
 - Per-volume settings override global settings, allowing fine-grained control.
@@ -411,11 +416,11 @@ docker run --rm -v postgres_data_restored:/data -v /tmp/restore:/backup alpine \
 
 The Docker image uses three volume mount points:
 
-| Mount Point | Purpose |
-|-------------|---------|
-| `/config` | Config file (`backitup.config.yaml`) and database |
-| `/data` | Source files to backup (or mount your own paths) |
-| `/backups` | Local backup storage destination |
+| Mount Point | Purpose                                           |
+| ----------- | ------------------------------------------------- |
+| `/config`   | Config file (`backitup.config.yaml`) and database |
+| `/data`     | Source files to backup (or mount your own paths)  |
+| `/backups`  | Local backup storage destination                  |
 
 ```bash
 docker run -d --name backitup \
@@ -561,6 +566,7 @@ WantedBy=multi-user.target
 | [list](docs/commands/list.md)                    | List existing backups            |
 | [cleanup](docs/commands/cleanup.md)              | Remove old backups               |
 | [verify](docs/commands/verify.md)                | Verify backup integrity          |
+| [export-db](docs/commands/export-db.md)          | Export the database file         |
 
 ---
 

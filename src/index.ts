@@ -3,6 +3,7 @@
 import * as p from "@clack/prompts";
 import { backupCommand } from "./cli/commands/backup";
 import { cleanupCommand } from "./cli/commands/cleanup";
+import { exportDbCommand } from "./cli/commands/export-db";
 import { listCommand } from "./cli/commands/list";
 import { startCommand } from "./cli/commands/start";
 import { verifyCommand } from "./cli/commands/verify";
@@ -17,7 +18,8 @@ function printHelp(): void {
 ${color.cyan("backup")}      Create a backup
 ${color.cyan("cleanup")}     Clean up old backups based on retention policy
 ${color.cyan("list")}        List existing backups
-${color.cyan("verify")}      Verify backup integrity`,
+${color.cyan("verify")}      Verify backup integrity
+${color.cyan("export-db")}   Export the database file`,
     "Commands",
   );
 
@@ -77,6 +79,9 @@ async function main(): Promise<number> {
 
     case "verify":
       return verifyCommand(commandArgs);
+
+    case "export-db":
+      return exportDbCommand(commandArgs);
 
     case "-h":
     case "--help":

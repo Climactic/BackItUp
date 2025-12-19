@@ -27,7 +27,9 @@ ${color.cyan("Ko-fi:")}     https://ko-fi.com/ClimacticCo`;
  */
 export function banner(command: string): void {
   console.log(color.bold(color.cyan(LOGO)));
-  p.intro(`${color.cyan("BackItUp")} ${color.dim(`v${VERSION}`)} ${color.dim("·")} ${color.white(command)}`);
+  p.intro(
+    `${color.cyan("BackItUp")} ${color.dim(`v${VERSION}`)} ${color.dim("·")} ${color.white(command)}`,
+  );
   p.note(LINKS, "Links");
 }
 

@@ -64,15 +64,15 @@ BackItUp supports passing configuration options directly via command-line flags.
 
 ### Docker
 
-| Option                       | Description                               |
-| ---------------------------- | ----------------------------------------- |
-| `--docker`                   | Enable Docker volume backups              |
-| `--no-docker`                | Disable Docker volume backups             |
-| `--docker-volume <name>`     | Docker volume to backup (repeatable)      |
-| `--stop-containers`          | Stop containers before volume backup      |
-| `--no-stop-containers`       | Don't stop containers (default behavior)  |
-| `--stop-timeout <seconds>`   | Timeout for graceful stop (default: 30)   |
-| `--restart-retries <n>`      | Retry attempts for restart (default: 3)   |
+| Option                     | Description                              |
+| -------------------------- | ---------------------------------------- |
+| `--docker`                 | Enable Docker volume backups             |
+| `--no-docker`              | Disable Docker volume backups            |
+| `--docker-volume <name>`   | Docker volume to backup (repeatable)     |
+| `--stop-containers`        | Stop containers before volume backup     |
+| `--no-stop-containers`     | Don't stop containers (default behavior) |
+| `--stop-timeout <seconds>` | Timeout for graceful stop (default: 30)  |
+| `--restart-retries <n>`    | Retry attempts for restart (default: 3)  |
 
 ## Usage Modes
 

@@ -137,6 +137,7 @@ backitup backup -s manual \
 ```
 
 **Notes:**
+
 - Containers are automatically restarted after backup completes
 - Containers with `restart: always` policy may auto-restart (a warning is logged)
 - If restart fails after all retries, backup succeeds but a warning is logged

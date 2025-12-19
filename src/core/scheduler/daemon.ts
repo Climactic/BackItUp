@@ -25,16 +25,22 @@ export class Scheduler {
   constructor(config: BackitupConfig) {
     this.config = config;
 
+    // Get global timezone from scheduler config
+    const globalTimezone = config.scheduler?.timezone;
+
     for (const [name, scheduleConfig] of Object.entries(config.schedules)) {
       try {
-        const cron = parseCron(scheduleConfig.cron);
+        // Use schedule-specific timezone, falling back to global timezone
+        const timezone = scheduleConfig.timezone ?? globalTimezone;
+        const cron = parseCron(scheduleConfig.cron, { timezone });
         this.schedules.set(name, {
           name,
           cron,
           lastRun: null,
           retention: scheduleConfig.retention,
         });
-        logger.debug(`Parsed schedule "${name}": ${scheduleConfig.cron}`);
+        const tzInfo = timezone ? ` (${timezone})` : "";
+        logger.debug(`Parsed schedule "${name}": ${scheduleConfig.cron}${tzInfo}`);
       } catch (error) {
         logger.error(`Failed to parse schedule "${name}": ${(error as Error).message}`);
       }
@@ -125,31 +131,40 @@ export class Scheduler {
       return null;
     }
 
-    const now = new Date();
-    const maxIterations = 60 * 24 * 366;
+    try {
+      const now = new Date();
+      const maxIterations = 60 * 24 * 366;
 
-    for (let i = 0; i < maxIterations; i++) {
-      const checkTime = new Date(now.getTime() + i * 60 * 1000);
-      checkTime.setSeconds(0);
-      checkTime.setMilliseconds(0);
+      for (let i = 0; i < maxIterations; i++) {
+        const checkTime = new Date(now.getTime() + i * 60 * 1000);
+        checkTime.setSeconds(0);
+        checkTime.setMilliseconds(0);
 
-      if (matchesCron(state.cron, checkTime)) {
-        return checkTime;
+        if (matchesCron(state.cron, checkTime)) {
+          return checkTime;
+        }
       }
-    }
 
-    return null;
+      return null;
+    } catch (error) {
+      logger.error(
+        `Failed to calculate next run for "${scheduleName}": ${(error as Error).message}`,
+      );
+      return null;
+    }
   }
 
   getStatus(): {
     name: string;
     cron: string;
+    timezone?: string;
     lastRun: Date | null;
     nextRun: Date | null;
   }[] {
     const status: {
       name: string;
       cron: string;
+      timezone?: string;
       lastRun: Date | null;
       nextRun: Date | null;
     }[] = [];
@@ -160,6 +175,7 @@ export class Scheduler {
         status.push({
           name,
           cron: scheduleConfig.cron,
+          timezone: state.cron.timezone,
           lastRun: state.lastRun,
           nextRun: this.getNextRun(name),
         });

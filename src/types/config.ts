@@ -32,6 +32,13 @@ export interface ScheduleConfig {
   cron: string;
   retention: RetentionConfig;
   sources?: string[];
+  /** Timezone for this schedule (overrides global timezone) */
+  timezone?: string;
+}
+
+export interface SchedulerConfig {
+  /** Global timezone for all schedules (default: system timezone) */
+  timezone?: string;
 }
 
 export interface SafetyConfig {
@@ -97,6 +104,7 @@ export interface BackitupConfig {
   local: LocalStorageConfig;
   s3: S3StorageConfig;
   schedules: Record<string, ScheduleConfig>;
+  scheduler?: SchedulerConfig;
   archive?: ArchiveConfig;
   safety?: SafetyConfig;
   docker?: DockerConfig;

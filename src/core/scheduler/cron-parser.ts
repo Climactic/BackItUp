@@ -14,10 +14,15 @@ import { CronExpressionParser } from "cron-parser";
 
 export interface ParsedCron {
   expression: string;
+  timezone?: string;
   interval: ReturnType<typeof CronExpressionParser.parse>;
 }
 
-export function parseCron(expression: string): ParsedCron {
+export interface ParseCronOptions {
+  timezone?: string;
+}
+
+export function parseCron(expression: string, options?: ParseCronOptions): ParsedCron {
   // Validate that we have exactly 5 fields (standard cron format)
   const fields = expression.trim().split(/\s+/);
   if (fields.length !== 5) {
@@ -26,8 +31,9 @@ export function parseCron(expression: string): ParsedCron {
     );
   }
 
-  const interval = CronExpressionParser.parse(expression);
-  return { expression, interval };
+  const parserOptions = options?.timezone ? { tz: options.timezone } : undefined;
+  const interval = CronExpressionParser.parse(expression, parserOptions);
+  return { expression, timezone: options?.timezone, interval };
 }
 
 export function matchesCron(cron: ParsedCron, date: Date): boolean {
@@ -38,9 +44,13 @@ export function matchesCron(cron: ParsedCron, date: Date): boolean {
 
   // Get the next scheduled time from a minute before
   const checkDate = new Date(testDate.getTime() - 60000);
-  const interval = CronExpressionParser.parse(cron.expression, {
+  const parserOptions: { currentDate: Date; tz?: string } = {
     currentDate: checkDate,
-  });
+  };
+  if (cron.timezone) {
+    parserOptions.tz = cron.timezone;
+  }
+  const interval = CronExpressionParser.parse(cron.expression, parserOptions);
 
   const nextDate = interval.next().toDate();
   nextDate.setSeconds(0);
@@ -50,9 +60,17 @@ export function matchesCron(cron: ParsedCron, date: Date): boolean {
 }
 
 export function getNextRun(cron: ParsedCron, fromDate?: Date): Date {
-  const interval = CronExpressionParser.parse(cron.expression, {
-    currentDate: fromDate,
-  });
+  const parserOptions: { currentDate?: Date; tz?: string } = {};
+  if (fromDate) {
+    parserOptions.currentDate = fromDate;
+  }
+  if (cron.timezone) {
+    parserOptions.tz = cron.timezone;
+  }
+  const interval = CronExpressionParser.parse(
+    cron.expression,
+    Object.keys(parserOptions).length > 0 ? parserOptions : undefined,
+  );
   return interval.next().toDate();
 }
 

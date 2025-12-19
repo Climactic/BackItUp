@@ -215,6 +215,24 @@ function validateSchedule(name: string, schedule: unknown, sourceNames: string[]
       }
     }
   }
+
+  if (sched.timezone !== undefined && typeof sched.timezone !== "string") {
+    throw new ConfigError(`schedules.${name}.timezone must be a string`);
+  }
+}
+
+/**
+ * Validate the scheduler configuration
+ */
+function validateSchedulerConfig(config: unknown): void {
+  if (!config) return;
+  if (typeof config !== "object") {
+    throw new ConfigError("scheduler must be an object");
+  }
+  const scheduler = config as Record<string, unknown>;
+  if (scheduler.timezone !== undefined && typeof scheduler.timezone !== "string") {
+    throw new ConfigError("scheduler.timezone must be a string");
+  }
 }
 
 /**
@@ -242,4 +260,5 @@ export function validateConfig(config: unknown): asserts config is BackitupConfi
   validators.schedules!(c, sourceNames);
   validators.storage!(c);
   validators.docker!(c);
+  validateSchedulerConfig(c.scheduler);
 }

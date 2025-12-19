@@ -422,6 +422,92 @@ schedules:
       expect(loaded.schedules.daily!.sources).toEqual(["app"]);
     });
 
+    // Timezone validation tests
+    describe("timezone validation", () => {
+      test("accepts valid schedule timezone", async () => {
+        const config = {
+          ...validConfig,
+          schedules: {
+            daily: {
+              cron: "0 2 * * *",
+              retention: { maxCount: 7, maxDays: 30 },
+              timezone: "America/New_York",
+            },
+          },
+        };
+        const loaded = await writeAndLoad(config);
+        expect(loaded.schedules.daily!.timezone).toBe("America/New_York");
+      });
+
+      test("accepts schedule without timezone", async () => {
+        const loaded = await writeAndLoad(validConfig);
+        expect(loaded.schedules.daily!.timezone).toBeUndefined();
+      });
+
+      test("throws for non-string schedule timezone", async () => {
+        const config = {
+          ...validConfig,
+          schedules: {
+            daily: {
+              cron: "0 2 * * *",
+              retention: { maxCount: 7, maxDays: 30 },
+              timezone: 123,
+            },
+          },
+        };
+        await expect(writeAndLoad(config)).rejects.toThrow(
+          "schedules.daily.timezone must be a string",
+        );
+      });
+
+      test("accepts valid global scheduler timezone", async () => {
+        const config = {
+          ...validConfig,
+          scheduler: {
+            timezone: "Europe/London",
+          },
+        };
+        const loaded = await writeAndLoad(config);
+        expect(loaded.scheduler?.timezone).toBe("Europe/London");
+      });
+
+      test("accepts config without scheduler section", async () => {
+        const loaded = await writeAndLoad(validConfig);
+        expect(loaded.scheduler).toBeUndefined();
+      });
+
+      test("throws for non-object scheduler", async () => {
+        const config = {
+          ...validConfig,
+          scheduler: "invalid",
+        };
+        await expect(writeAndLoad(config)).rejects.toThrow("scheduler must be an object");
+      });
+
+      test("throws for non-string scheduler.timezone", async () => {
+        const config = {
+          ...validConfig,
+          scheduler: {
+            timezone: 123,
+          },
+        };
+        await expect(writeAndLoad(config)).rejects.toThrow("scheduler.timezone must be a string");
+      });
+
+      test("accepts common IANA timezones", async () => {
+        const timezones = ["UTC", "America/Los_Angeles", "Europe/Paris", "Asia/Tokyo"];
+
+        for (const tz of timezones) {
+          const config = {
+            ...validConfig,
+            scheduler: { timezone: tz },
+          };
+          const loaded = await writeAndLoad(config);
+          expect(loaded.scheduler?.timezone).toBe(tz);
+        }
+      });
+    });
+
     // Docker containerStop validation tests
     describe("docker containerStop validation", () => {
       const dockerBaseConfig = {

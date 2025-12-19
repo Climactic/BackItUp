@@ -221,18 +221,36 @@ S3-compatible storage (AWS S3, R2, MinIO, etc.).
 - `S3_REGION` (optional)
 - `S3_ENDPOINT` (optional)
 
+### `scheduler`
+
+Global scheduler settings.
+
+| Field      | Type   | Required | Description                                    |
+| ---------- | ------ | -------- | ---------------------------------------------- |
+| `timezone` | string | No       | Default timezone for all schedules (IANA name) |
+
+**Example:**
+
+```yaml
+scheduler:
+  timezone: "America/New_York"
+```
+
 ### `schedules`
 
 Named schedules with cron expressions and retention policies.
 
-| Field                | Type     | Required | Description                      |
-| -------------------- | -------- | -------- | -------------------------------- |
-| `cron`               | string   | Yes      | Cron expression (5 fields)       |
-| `retention.maxCount` | number   | No       | Maximum backups to keep          |
-| `retention.maxDays`  | number   | No       | Delete backups older than N days |
-| `sources`            | string[] | No       | Limit to specific sources        |
+| Field                | Type     | Required | Description                                   |
+| -------------------- | -------- | -------- | --------------------------------------------- |
+| `cron`               | string   | Yes      | Cron expression (5 fields)                    |
+| `retention.maxCount` | number   | No       | Maximum backups to keep                       |
+| `retention.maxDays`  | number   | No       | Delete backups older than N days              |
+| `sources`            | string[] | No       | Limit to specific sources                     |
+| `timezone`           | string   | No       | Timezone for this schedule (overrides global) |
 
 **Cron Format:** `minute hour day-of-month month day-of-week`
+
+**Timezone:** Use IANA timezone names (e.g., `America/New_York`, `Europe/London`, `Asia/Tokyo`). If not specified, the system timezone is used.
 
 ### `archive`
 

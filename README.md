@@ -29,7 +29,7 @@ Glob patterns • tar.gz compression • Local + S3 storage • Docker volumes �
 - 🔍 **Glob Patterns** — Include/exclude files using patterns (`**/*.ts`, `!**/node_modules/**`)
 - 🐳 **Docker Volumes** — Backup Docker volumes with Docker Compose integration
 - ☁️ **Dual Storage** — Store backups locally and/or in S3 (supports R2, MinIO, etc.)
-- ⏰ **Scheduled Backups** — Cron-based scheduling with independent retention policies
+- ⏰ **Scheduled Backups** — Cron-based scheduling with timezone support and independent retention policies
 - 🛡️ **Safe Cleanup** — Multi-layer validation before any deletion (checksums, path verification)
 - ✅ **Integrity Verification** — Verify backups exist and checksums match
 
@@ -106,9 +106,14 @@ s3:
   # accessKeyId: "key"                 # Or use S3_ACCESS_KEY_ID env var
   # secretAccessKey: "secret"          # Or use S3_SECRET_ACCESS_KEY env var
 
+# Optional: Set default timezone for all schedules
+# scheduler:
+#   timezone: "America/New_York"
+
 schedules:
   daily:
     cron: "0 2 * * *"        # Daily at 2 AM
+    # timezone: "Europe/London"  # Override global timezone
     retention:
       maxCount: 7            # Keep max 7 backups
       maxDays: 14            # Delete after 14 days

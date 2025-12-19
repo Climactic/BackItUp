@@ -41,7 +41,7 @@ export async function verifyCommand(args: string[]): Promise<number> {
 
   try {
     const config = await findAndLoadConfig(values.config);
-    initDatabase(config.database.path);
+    await initDatabase(config.database.path);
 
     ui.intro("backitup verify");
 

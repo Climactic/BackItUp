@@ -35,7 +35,7 @@ export async function runCleanup(
   config: BackitupConfig,
   options: CleanupOptions,
 ): Promise<CleanupResult> {
-  initDatabase(config.database.path);
+  await initDatabase(config.database.path);
 
   if (config.s3.enabled) {
     initS3Client(config.s3);

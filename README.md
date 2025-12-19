@@ -409,11 +409,37 @@ docker run --rm -v postgres_data_restored:/data -v /tmp/restore:/backup alpine \
 
 ### Docker
 
+The Docker image uses three volume mount points:
+
+| Mount Point | Purpose |
+|-------------|---------|
+| `/config` | Config file (`backitup.config.yaml`) and database |
+| `/data` | Source files to backup (or mount your own paths) |
+| `/backups` | Local backup storage destination |
+
 ```bash
 docker run -d --name backitup \
-  -v ./config:/config:ro -v ./data:/data -v ./backups:/backups \
-  -e S3_ACCESS_KEY_ID=key -e S3_SECRET_ACCESS_KEY=secret \
+  -v ./config:/config \
+  -v ./data:/data:ro \
+  -v ./backups:/backups \
+  -e S3_ACCESS_KEY_ID=key \
+  -e S3_SECRET_ACCESS_KEY=secret \
   ghcr.io/climactic/backitup:latest start
+```
+
+Your config file should reference these paths:
+
+```yaml
+# /config/backitup.config.yaml
+version: "1.0"
+database:
+  path: /config/backitup.db
+sources:
+  app:
+    path: /data
+local:
+  enabled: true
+  path: /backups
 ```
 
 To backup Docker volumes from within a container, mount the Docker socket:
@@ -421,7 +447,20 @@ To backup Docker volumes from within a container, mount the Docker socket:
 ```bash
 docker run -d --name backitup \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  -v ./config:/config:ro -v ./data:/data -v ./backups:/backups \
+  -v ./config:/config \
+  -v ./data:/data:ro \
+  -v ./backups:/backups \
+  ghcr.io/climactic/backitup:latest start
+```
+
+You can also mount specific host paths instead of using `/data`:
+
+```bash
+docker run -d --name backitup \
+  -v ./config:/config \
+  -v /var/www/myapp:/myapp:ro \
+  -v /var/lib/postgres:/postgres:ro \
+  -v ./backups:/backups \
   ghcr.io/climactic/backitup:latest start
 ```
 
@@ -433,9 +472,9 @@ services:
     image: ghcr.io/climactic/backitup:latest
     command: start
     volumes:
-      - ./config:/config:ro
-      - ./data:/data
-      - ./backups:/backups
+      - ./config:/config              # Config + database
+      - ./data:/data:ro               # Source files (read-only)
+      - ./backups:/backups            # Local backup destination
       - /var/run/docker.sock:/var/run/docker.sock  # For volume backups
     environment:
       - S3_ACCESS_KEY_ID=key

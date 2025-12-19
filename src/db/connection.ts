@@ -2,15 +2,20 @@
  * Database connection management
  */
 
+import { mkdir } from "node:fs/promises";
+import { dirname } from "node:path";
 import { Database } from "bun:sqlite";
 import { initializeDatabase } from "./migrations";
 
 let db: Database | null = null;
 
-export function initDatabase(dbPath: string): Database {
+export async function initDatabase(dbPath: string): Promise<Database> {
   if (db) {
     return db;
   }
+
+  // Ensure parent directory exists
+  await mkdir(dirname(dbPath), { recursive: true });
 
   db = new Database(dbPath, { create: true });
   initializeDatabase(db);

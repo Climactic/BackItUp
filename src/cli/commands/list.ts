@@ -38,7 +38,7 @@ export async function listCommand(args: string[]): Promise<number> {
 
   try {
     const config = await findAndLoadConfig(values.config);
-    initDatabase(config.database.path);
+    await initDatabase(config.database.path);
 
     // Get backups
     let backups: BackupRecord[];

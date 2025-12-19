@@ -62,7 +62,7 @@ export async function runBackup(
 
   logger.info(`Starting backup: ${backupId} (schedule: ${options.schedule})`);
 
-  initDatabase(config.database.path);
+  await initDatabase(config.database.path);
 
   const useS3 = config.s3.enabled && !options.localOnly;
   const useLocal = config.local.enabled && !options.s3Only;

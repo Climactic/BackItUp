@@ -73,15 +73,54 @@ function parseConfigContent(content: string, ext: string): unknown {
 }
 
 /**
- * Find a config file in the given directory
+ * Check if running inside a Docker container
+ */
+function isRunningInDocker(): boolean {
+  try {
+    // Check for .dockerenv file (most reliable)
+    if (Bun.file("/.dockerenv").size >= 0) {
+      return true;
+    }
+  } catch {
+    // File doesn't exist
+  }
+
+  try {
+    // Check cgroup for docker/container references
+    const cgroup = Bun.file("/proc/1/cgroup");
+    if (cgroup.size > 0) {
+      // We can't easily read sync here, so just check if the file exists
+      // The /.dockerenv check above is the primary method
+    }
+  } catch {
+    // Not on Linux or file not accessible
+  }
+
+  return false;
+}
+
+/**
+ * Find a config file in the given directory or standard locations
  */
 export function findConfigFile(startDir: string = process.cwd()): string | null {
   const configNames = ["backitup.config.yaml", "backitup.config.yml", "backitup.config.json"];
+  const searchDirs = [startDir];
 
-  for (const name of configNames) {
-    const configPath = path.join(startDir, name);
-    if (Bun.file(configPath).size > 0) {
-      return configPath;
+  // Only check /config when running in Docker
+  if (isRunningInDocker()) {
+    searchDirs.push("/config");
+  }
+
+  for (const dir of searchDirs) {
+    for (const name of configNames) {
+      const configPath = path.join(dir, name);
+      try {
+        if (Bun.file(configPath).size > 0) {
+          return configPath;
+        }
+      } catch {
+        // Directory doesn't exist or not accessible, continue
+      }
     }
   }
 

@@ -66,6 +66,16 @@ export interface InlineConfigOptions {
   noDocker?: boolean;
   /** Docker volumes to backup (can be repeated) */
   dockerVolume?: string[];
+
+  // Docker container stop/restart
+  /** Stop containers using volumes before backup */
+  stopContainers?: boolean;
+  /** Keep containers running during backup (explicit override) */
+  noStopContainers?: boolean;
+  /** Timeout in seconds for stopping containers gracefully */
+  stopTimeout?: number;
+  /** Number of times to retry restarting containers */
+  restartRetries?: number;
 }
 
 /**
@@ -164,12 +174,33 @@ export function buildInlineConfig(options: InlineConfigOptions): Partial<Backitu
   if (
     options.docker !== undefined ||
     options.noDocker !== undefined ||
-    (options.dockerVolume && options.dockerVolume.length > 0)
+    (options.dockerVolume && options.dockerVolume.length > 0) ||
+    options.stopContainers !== undefined ||
+    options.noStopContainers !== undefined ||
+    options.stopTimeout !== undefined ||
+    options.restartRetries !== undefined
   ) {
     const volumes: DockerVolumeSource[] = (options.dockerVolume || []).map((name) => ({ name }));
+
+    // Build containerStop config if any related options are provided
+    const hasContainerStopOptions =
+      options.stopContainers !== undefined ||
+      options.noStopContainers !== undefined ||
+      options.stopTimeout !== undefined ||
+      options.restartRetries !== undefined;
+
+    const containerStop = hasContainerStopOptions
+      ? {
+          stopContainers: options.noStopContainers ? false : options.stopContainers,
+          ...(options.stopTimeout !== undefined && { stopTimeout: options.stopTimeout }),
+          ...(options.restartRetries !== undefined && { restartRetries: options.restartRetries }),
+        }
+      : undefined;
+
     config.docker = {
       enabled: options.noDocker ? false : (options.docker ?? volumes.length > 0),
       volumes,
+      ...(containerStop && { containerStop }),
     };
   }
 
@@ -229,6 +260,12 @@ export const INLINE_CONFIG_OPTIONS = {
   docker: { type: "boolean" as const },
   "no-docker": { type: "boolean" as const, default: false },
   "docker-volume": { type: "string" as const, multiple: true },
+
+  // Docker container stop/restart
+  "stop-containers": { type: "boolean" as const },
+  "no-stop-containers": { type: "boolean" as const, default: false },
+  "stop-timeout": { type: "string" as const },
+  "restart-retries": { type: "string" as const },
 } as const;
 
 /**
@@ -276,6 +313,16 @@ export function extractInlineOptions(values: Record<string, unknown>): InlineCon
     docker: values.docker as boolean | undefined,
     noDocker: values["no-docker"] as boolean | undefined,
     dockerVolume: values["docker-volume"] as string[] | undefined,
+
+    // Docker container stop/restart
+    stopContainers: values["stop-containers"] as boolean | undefined,
+    noStopContainers: values["no-stop-containers"] as boolean | undefined,
+    stopTimeout: values["stop-timeout"]
+      ? parseInt(values["stop-timeout"] as string, 10)
+      : undefined,
+    restartRetries: values["restart-retries"]
+      ? parseInt(values["restart-retries"] as string, 10)
+      : undefined,
   };
 }
 
@@ -313,7 +360,12 @@ export function hasInlineOptions(options: InlineConfigOptions): boolean {
       // Docker
       options.docker !== undefined ||
       options.noDocker ||
-      (options.dockerVolume && options.dockerVolume.length > 0)
+      (options.dockerVolume && options.dockerVolume.length > 0) ||
+      // Docker container stop/restart
+      options.stopContainers !== undefined ||
+      options.noStopContainers ||
+      options.stopTimeout !== undefined ||
+      options.restartRetries !== undefined
     )
   );
 }
@@ -434,16 +486,34 @@ export function createConfigFromInlineOptions(options: InlineConfigOptions): Bac
     },
   };
 
-  // Add Docker config if volumes specified
-  if (options.dockerVolume && options.dockerVolume.length > 0) {
+  // Build containerStop config if any related options are provided
+  const hasContainerStopOptions =
+    options.stopContainers !== undefined ||
+    options.noStopContainers !== undefined ||
+    options.stopTimeout !== undefined ||
+    options.restartRetries !== undefined;
+
+  const containerStop = hasContainerStopOptions
+    ? {
+        stopContainers: options.noStopContainers ? false : options.stopContainers,
+        ...(options.stopTimeout !== undefined && { stopTimeout: options.stopTimeout }),
+        ...(options.restartRetries !== undefined && { restartRetries: options.restartRetries }),
+      }
+    : undefined;
+
+  // Add Docker config if volumes specified or container stop options
+  if (
+    (options.dockerVolume && options.dockerVolume.length > 0) ||
+    options.docker !== undefined ||
+    options.noDocker ||
+    hasContainerStopOptions
+  ) {
     config.docker = {
-      enabled: !options.noDocker,
-      volumes: options.dockerVolume.map((name) => ({ name })),
-    };
-  } else if (options.docker !== undefined || options.noDocker) {
-    config.docker = {
-      enabled: options.noDocker ? false : (options.docker ?? false),
-      volumes: [],
+      enabled: options.noDocker
+        ? false
+        : (options.docker ?? (options.dockerVolume?.length ?? 0) > 0),
+      volumes: (options.dockerVolume || []).map((name) => ({ name })),
+      ...(containerStop && { containerStop }),
     };
   }
 

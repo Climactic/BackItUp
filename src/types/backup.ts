@@ -61,6 +61,12 @@ export interface VolumeBackupResult {
   wasInUse: boolean;
   /** Names of containers that had the volume mounted during backup */
   containersUsingVolume: string[];
+  /** Names of containers that were stopped for this backup */
+  stoppedContainers?: string[];
+  /** Names of containers that failed to restart after backup */
+  failedToRestart?: string[];
+  /** Whether any stopped containers had auto-restart policy (restart: always/unless-stopped) */
+  hadAutoRestartWarning?: boolean;
 }
 
 /**

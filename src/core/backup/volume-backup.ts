@@ -6,13 +6,67 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { ensureImage, isDockerAvailable, runContainer } from "../../docker/client";
 import { inferProjectName, resolveServiceVolumes } from "../../docker/compose";
-import { getRunningContainersUsingVolume, isVolumeInUse, volumeExists } from "../../docker/volume";
+import {
+  getRunningContainersUsingVolume,
+  isVolumeInUse,
+  restartContainers,
+  stopContainersUsingVolume,
+  volumeExists,
+  type StoppedContainer,
+} from "../../docker/volume";
 import type { VolumeBackupResult, VolumeBackupsResult } from "../../types/backup";
-import type { DockerConfig, DockerVolumeSource } from "../../types/config";
+import type { ContainerStopConfig, DockerConfig, DockerVolumeSource } from "../../types/config";
 import { computeFileChecksum } from "../../utils/crypto";
 import { logger } from "../../utils/logger";
 
 const BACKUP_IMAGE = "alpine:latest";
+
+/**
+ * Default values for container stop configuration
+ */
+const DEFAULT_CONTAINER_STOP_CONFIG = {
+  stopContainers: false,
+  stopTimeout: 30,
+  restartRetries: 3,
+  restartRetryDelay: 1000,
+};
+
+/**
+ * Resolved container stop configuration with all defaults filled in
+ */
+interface ResolvedContainerStopConfig {
+  stopContainers: boolean;
+  stopTimeout: number;
+  restartRetries: number;
+  restartRetryDelay: number;
+}
+
+/**
+ * Resolve container stop config with per-volume overrides taking precedence
+ */
+function resolveContainerStopConfig(
+  globalConfig: ContainerStopConfig | undefined,
+  volumeConfig: ContainerStopConfig | undefined,
+): ResolvedContainerStopConfig {
+  return {
+    stopContainers:
+      volumeConfig?.stopContainers ??
+      globalConfig?.stopContainers ??
+      DEFAULT_CONTAINER_STOP_CONFIG.stopContainers,
+    stopTimeout:
+      volumeConfig?.stopTimeout ??
+      globalConfig?.stopTimeout ??
+      DEFAULT_CONTAINER_STOP_CONFIG.stopTimeout,
+    restartRetries:
+      volumeConfig?.restartRetries ??
+      globalConfig?.restartRetries ??
+      DEFAULT_CONTAINER_STOP_CONFIG.restartRetries,
+    restartRetryDelay:
+      volumeConfig?.restartRetryDelay ??
+      globalConfig?.restartRetryDelay ??
+      DEFAULT_CONTAINER_STOP_CONFIG.restartRetryDelay,
+  };
+}
 
 /**
  * Generate archive name for a volume backup
@@ -32,6 +86,7 @@ export async function backupVolume(
   outputDir: string,
   schedule: string,
   prefix: string,
+  containerStopConfig?: ResolvedContainerStopConfig,
 ): Promise<VolumeBackupResult> {
   logger.info(`Backing up Docker volume: ${volumeName}`);
 
@@ -43,14 +98,39 @@ export async function backupVolume(
   // Check if volume is in use
   const inUse = await isVolumeInUse(volumeName);
   const containersUsingVolume: string[] = [];
+  let stoppedContainers: StoppedContainer[] = [];
+  let failedToRestart: string[] = [];
+  let hadAutoRestartWarning = false;
 
   if (inUse) {
     const containers = await getRunningContainersUsingVolume(volumeName);
     containersUsingVolume.push(...containers.map((c) => c.name));
-    logger.warn(
-      `Volume ${volumeName} is in use by running containers: ${containersUsingVolume.join(", ")}. ` +
-        "Backup may be inconsistent.",
-    );
+
+    // Should we stop containers?
+    if (containerStopConfig?.stopContainers) {
+      logger.info(
+        `Stopping ${containers.length} container(s) using volume ${volumeName} before backup...`,
+      );
+
+      const stopResult = await stopContainersUsingVolume(
+        volumeName,
+        containerStopConfig.stopTimeout,
+      );
+      stoppedContainers = stopResult.stopped;
+      hadAutoRestartWarning = stoppedContainers.some((c) => c.hadAutoRestartPolicy);
+
+      if (stopResult.failed.length > 0) {
+        logger.warn(
+          `Failed to stop some containers: ${stopResult.failed.join(", ")}. ` +
+            "Backup may be inconsistent.",
+        );
+      }
+    } else {
+      logger.warn(
+        `Volume ${volumeName} is in use by running containers: ${containersUsingVolume.join(", ")}. ` +
+          "Backup may be inconsistent. Use --stop-containers to stop them before backup.",
+      );
+    }
   }
 
   // Generate archive name
@@ -71,6 +151,15 @@ export async function backupVolume(
   });
 
   if (!result.success) {
+    // If we stopped containers, try to restart them even on failure
+    if (stoppedContainers.length > 0 && containerStopConfig) {
+      logger.info("Backup failed, attempting to restart stopped containers...");
+      await restartContainers(
+        stoppedContainers,
+        containerStopConfig.restartRetries,
+        containerStopConfig.restartRetryDelay,
+      );
+    }
     throw new Error(`Failed to backup volume ${volumeName}: ${result.stderr || result.stdout}`);
   }
 
@@ -85,6 +174,17 @@ export async function backupVolume(
 
   logger.info(`Volume ${volumeName} backed up: ${archiveName} (${sizeBytes} bytes)`);
 
+  // Restart containers if we stopped them
+  if (stoppedContainers.length > 0 && containerStopConfig) {
+    logger.info(`Restarting ${stoppedContainers.length} container(s)...`);
+    const restartResult = await restartContainers(
+      stoppedContainers,
+      containerStopConfig.restartRetries,
+      containerStopConfig.restartRetryDelay,
+    );
+    failedToRestart = restartResult.failed;
+  }
+
   return {
     volumeName,
     archivePath,
@@ -93,29 +193,56 @@ export async function backupVolume(
     checksum,
     wasInUse: inUse,
     containersUsingVolume,
+    stoppedContainers: stoppedContainers.map((c) => c.name),
+    failedToRestart: failedToRestart.length > 0 ? failedToRestart : undefined,
+    hadAutoRestartWarning: hadAutoRestartWarning || undefined,
   };
 }
 
 /**
- * Resolve volume sources to actual Docker volume names
+ * Resolved volume with its source config for per-volume settings
  */
-export async function resolveVolumeNames(sources: DockerVolumeSource[]): Promise<string[]> {
-  const volumeNames: string[] = [];
+interface ResolvedVolume {
+  name: string;
+  source: DockerVolumeSource;
+}
+
+/**
+ * Resolve volume sources to actual Docker volume names with their source configs
+ */
+export async function resolveVolumes(sources: DockerVolumeSource[]): Promise<ResolvedVolume[]> {
+  const resolved: ResolvedVolume[] = [];
+  const seenNames = new Set<string>();
 
   for (const source of sources) {
     if (source.type === "compose" && source.composePath) {
       // Resolve volumes from docker-compose.yml
       const projectName = source.projectName || inferProjectName(source.composePath);
-      const resolved = await resolveServiceVolumes(source.composePath, source.name, projectName);
-      volumeNames.push(...resolved);
+      const volumeNames = await resolveServiceVolumes(source.composePath, source.name, projectName);
+      for (const name of volumeNames) {
+        if (!seenNames.has(name)) {
+          seenNames.add(name);
+          resolved.push({ name, source });
+        }
+      }
     } else {
       // Direct volume name
-      volumeNames.push(source.name);
+      if (!seenNames.has(source.name)) {
+        seenNames.add(source.name);
+        resolved.push({ name: source.name, source });
+      }
     }
   }
 
-  // Remove duplicates
-  return [...new Set(volumeNames)];
+  return resolved;
+}
+
+/**
+ * Resolve volume sources to actual Docker volume names (backwards compatibility)
+ */
+export async function resolveVolumeNames(sources: DockerVolumeSource[]): Promise<string[]> {
+  const resolved = await resolveVolumes(sources);
+  return resolved.map((r) => r.name);
 }
 
 /**
@@ -139,10 +266,10 @@ export async function backupAllVolumes(
     throw new Error("Docker is not available. Cannot backup volumes.");
   }
 
-  // Resolve all volume names
-  const volumeNames = await resolveVolumeNames(dockerConfig.volumes);
+  // Resolve all volumes with their source configs
+  const resolvedVolumes = await resolveVolumes(dockerConfig.volumes);
 
-  if (volumeNames.length === 0) {
+  if (resolvedVolumes.length === 0) {
     logger.info("No Docker volumes configured for backup");
     return {
       volumes: [],
@@ -151,7 +278,7 @@ export async function backupAllVolumes(
     };
   }
 
-  logger.info(`Backing up ${volumeNames.length} Docker volume(s)`);
+  logger.info(`Backing up ${resolvedVolumes.length} Docker volume(s)`);
 
   // Create temp directory for volume backups
   const tempDir = path.join(os.tmpdir(), `backitup-volumes-${Date.now()}`);
@@ -162,9 +289,21 @@ export async function backupAllVolumes(
   let volumesInUseCount = 0;
 
   try {
-    for (const volumeName of volumeNames) {
+    for (const { name: volumeName, source } of resolvedVolumes) {
       try {
-        const result = await backupVolume(volumeName, tempDir, schedule, prefix);
+        // Resolve container stop config with per-volume overrides
+        const containerStopConfig = resolveContainerStopConfig(
+          dockerConfig.containerStop,
+          source.containerStop,
+        );
+
+        const result = await backupVolume(
+          volumeName,
+          tempDir,
+          schedule,
+          prefix,
+          containerStopConfig,
+        );
         results.push(result);
         totalSizeBytes += result.sizeBytes;
         if (result.wasInUse) {

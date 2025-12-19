@@ -185,11 +185,48 @@ export async function backupCommand(args: string[]): Promise<number> {
         label: "Volume names",
         value: volumeNames,
       });
+
+      // Count containers that were stopped
+      const stoppedContainers = result.volumeBackups
+        .flatMap((v) => v.stoppedContainers || [])
+        .filter((name, i, arr) => arr.indexOf(name) === i); // dedupe
+      if (stoppedContainers.length > 0) {
+        summaryItems.push({
+          label: "Containers stopped",
+          value: stoppedContainers.join(", "),
+        });
+      }
+
+      // Check for failed restarts
+      const failedRestarts = result.volumeBackups
+        .flatMap((v) => v.failedToRestart || [])
+        .filter((name, i, arr) => arr.indexOf(name) === i); // dedupe
+      if (failedRestarts.length > 0) {
+        summaryItems.push({
+          label: "Failed to restart",
+          value: `${failedRestarts.join(", ")} (manual restart required)`,
+        });
+      }
+
+      // Check for auto-restart warnings
+      const hadAutoRestartWarning = result.volumeBackups.some((v) => v.hadAutoRestartWarning);
+      if (hadAutoRestartWarning) {
+        summaryItems.push({
+          label: "Warning",
+          value: "Some containers had auto-restart policy",
+        });
+      }
+
       const inUseCount = result.volumeBackups.filter((v) => v.wasInUse).length;
-      if (inUseCount > 0) {
+      const stoppedCount = result.volumeBackups.filter(
+        (v) => v.stoppedContainers && v.stoppedContainers.length > 0,
+      ).length;
+      // Only show "in use" warning if containers weren't stopped
+      if (inUseCount > 0 && stoppedCount < inUseCount) {
+        const notStoppedCount = inUseCount - stoppedCount;
         summaryItems.push({
           label: "Volumes in use",
-          value: `${inUseCount} (data may be inconsistent)`,
+          value: `${notStoppedCount} (data may be inconsistent)`,
         });
       }
     }
@@ -254,6 +291,16 @@ ${color.dim("INLINE CONFIG OPTIONS:")}
       --no-docker                  Disable Docker volume backups
       --docker-volume <name>       Docker volume to backup (can be repeated)
 
+${color.dim("DOCKER CONTAINER OPTIONS:")}
+      --stop-containers            Stop containers using volumes before backup
+      --no-stop-containers         Keep containers running during backup (default)
+      --stop-timeout <seconds>     Graceful stop timeout (default: 30)
+      --restart-retries <n>        Restart retry attempts (default: 3)
+
+${color.dim("IMPORTANT:")} When using --stop-containers, be aware that containers with
+restart policy "always" or "unless-stopped" may auto-restart during backup.
+Consider using "restart: on-failure" for cleaner backups.
+
 ${color.dim("EXAMPLES:")}
   backitup backup                          # Interactive schedule selection
   backitup backup -s manual                # Manual backup (non-interactive)
@@ -268,5 +315,10 @@ ${color.dim("INLINE CONFIG EXAMPLES:")}
   backitup backup -s manual --source /data --local-path /backups
   backitup backup -s manual --source /app --s3-bucket my-backups --no-local
   backitup backup -s manual --source /db --retention-count 5 --retention-days 7
+
+${color.dim("DOCKER EXAMPLES:")}
+  backitup backup -s manual --docker-volume mydb --stop-containers
+  backitup backup -s manual --stop-containers --stop-timeout 60
+  backitup backup -s manual --docker-volume postgres_data --stop-containers --restart-retries 5
 `);
 }

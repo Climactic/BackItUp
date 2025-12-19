@@ -13,6 +13,39 @@ export class ConfigError extends Error {
 
 type Validator = (config: Record<string, unknown>, sources?: string[]) => void;
 
+/**
+ * Validate a containerStop configuration object
+ */
+function validateContainerStopConfig(config: unknown, path: string): void {
+  if (typeof config !== "object" || config === null) {
+    throw new ConfigError(`${path} must be an object`);
+  }
+
+  const c = config as Record<string, unknown>;
+
+  if (c.stopContainers !== undefined && typeof c.stopContainers !== "boolean") {
+    throw new ConfigError(`${path}.stopContainers must be a boolean`);
+  }
+
+  if (c.stopTimeout !== undefined) {
+    if (typeof c.stopTimeout !== "number" || c.stopTimeout < 0) {
+      throw new ConfigError(`${path}.stopTimeout must be a non-negative number`);
+    }
+  }
+
+  if (c.restartRetries !== undefined) {
+    if (typeof c.restartRetries !== "number" || c.restartRetries < 0) {
+      throw new ConfigError(`${path}.restartRetries must be a non-negative number`);
+    }
+  }
+
+  if (c.restartRetryDelay !== undefined) {
+    if (typeof c.restartRetryDelay !== "number" || c.restartRetryDelay < 0) {
+      throw new ConfigError(`${path}.restartRetryDelay must be a non-negative number`);
+    }
+  }
+}
+
 const validators: Record<string, Validator> = {
   version: (c) => {
     if (!c.version || typeof c.version !== "string") {
@@ -31,6 +64,12 @@ const validators: Record<string, Validator> = {
     if (typeof docker.enabled !== "boolean") {
       throw new ConfigError("docker.enabled must be a boolean");
     }
+
+    // Validate global containerStop config
+    if (docker.containerStop !== undefined) {
+      validateContainerStopConfig(docker.containerStop, "docker.containerStop");
+    }
+
     if (docker.enabled) {
       if (!Array.isArray(docker.volumes)) {
         throw new ConfigError("docker.volumes must be an array when docker.enabled is true");
@@ -50,6 +89,10 @@ const validators: Record<string, Validator> = {
           throw new ConfigError(
             `docker.volumes[${i}].composePath is required when type is 'compose'`,
           );
+        }
+        // Validate per-volume containerStop config
+        if (vol.containerStop !== undefined) {
+          validateContainerStopConfig(vol.containerStop, `docker.volumes[${i}].containerStop`);
         }
       }
     }

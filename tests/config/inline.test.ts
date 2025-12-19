@@ -220,6 +220,67 @@ describe("inline config", () => {
       expect(config.docker?.volumes[1]?.name).toBe("redis_data");
     });
 
+    test("builds config with stopContainers enabled", () => {
+      const options: InlineConfigOptions = {
+        dockerVolume: ["postgres_data"],
+        stopContainers: true,
+      };
+
+      const config = buildInlineConfig(options);
+
+      expect(config.docker?.containerStop?.stopContainers).toBe(true);
+    });
+
+    test("builds config with noStopContainers", () => {
+      const options: InlineConfigOptions = {
+        dockerVolume: ["postgres_data"],
+        noStopContainers: true,
+      };
+
+      const config = buildInlineConfig(options);
+
+      expect(config.docker?.containerStop?.stopContainers).toBe(false);
+    });
+
+    test("builds config with stopTimeout", () => {
+      const options: InlineConfigOptions = {
+        dockerVolume: ["postgres_data"],
+        stopContainers: true,
+        stopTimeout: 60,
+      };
+
+      const config = buildInlineConfig(options);
+
+      expect(config.docker?.containerStop?.stopTimeout).toBe(60);
+    });
+
+    test("builds config with restartRetries", () => {
+      const options: InlineConfigOptions = {
+        dockerVolume: ["postgres_data"],
+        stopContainers: true,
+        restartRetries: 5,
+      };
+
+      const config = buildInlineConfig(options);
+
+      expect(config.docker?.containerStop?.restartRetries).toBe(5);
+    });
+
+    test("builds config with all container stop options", () => {
+      const options: InlineConfigOptions = {
+        dockerVolume: ["postgres_data"],
+        stopContainers: true,
+        stopTimeout: 45,
+        restartRetries: 3,
+      };
+
+      const config = buildInlineConfig(options);
+
+      expect(config.docker?.containerStop?.stopContainers).toBe(true);
+      expect(config.docker?.containerStop?.stopTimeout).toBe(45);
+      expect(config.docker?.containerStop?.restartRetries).toBe(3);
+    });
+
     test("returns empty config when no options provided", () => {
       const options: InlineConfigOptions = {};
 
@@ -423,6 +484,42 @@ describe("inline config", () => {
       expect(options.dockerVolume).toEqual(["postgres_data", "redis_data"]);
     });
 
+    test("extracts container stop options", () => {
+      const values = {
+        "stop-containers": true,
+        "no-stop-containers": false,
+        "stop-timeout": "60",
+        "restart-retries": "5",
+      };
+
+      const options = extractInlineOptions(values);
+
+      expect(options.stopContainers).toBe(true);
+      expect(options.noStopContainers).toBe(false);
+      expect(options.stopTimeout).toBe(60);
+      expect(options.restartRetries).toBe(5);
+    });
+
+    test("parses stop-timeout as integer", () => {
+      const values = {
+        "stop-timeout": "45",
+      };
+
+      const options = extractInlineOptions(values);
+
+      expect(options.stopTimeout).toBe(45);
+    });
+
+    test("parses restart-retries as integer", () => {
+      const values = {
+        "restart-retries": "10",
+      };
+
+      const options = extractInlineOptions(values);
+
+      expect(options.restartRetries).toBe(10);
+    });
+
     test("handles undefined values", () => {
       const values = {};
 
@@ -535,6 +632,38 @@ describe("inline config", () => {
     test("returns true when Docker volumes are provided", () => {
       const options: InlineConfigOptions = {
         dockerVolume: ["postgres_data"],
+      };
+
+      expect(hasInlineOptions(options)).toBe(true);
+    });
+
+    test("returns true when stopContainers is provided", () => {
+      const options: InlineConfigOptions = {
+        stopContainers: true,
+      };
+
+      expect(hasInlineOptions(options)).toBe(true);
+    });
+
+    test("returns true when noStopContainers is provided", () => {
+      const options: InlineConfigOptions = {
+        noStopContainers: true,
+      };
+
+      expect(hasInlineOptions(options)).toBe(true);
+    });
+
+    test("returns true when stopTimeout is provided", () => {
+      const options: InlineConfigOptions = {
+        stopTimeout: 60,
+      };
+
+      expect(hasInlineOptions(options)).toBe(true);
+    });
+
+    test("returns true when restartRetries is provided", () => {
+      const options: InlineConfigOptions = {
+        restartRetries: 5,
       };
 
       expect(hasInlineOptions(options)).toBe(true);
@@ -844,6 +973,89 @@ describe("inline config", () => {
       const config = createConfigFromInlineOptions(options);
 
       expect(config.safety?.verifyChecksumBeforeDelete).toBe(false);
+    });
+
+    test("creates config with stopContainers enabled", () => {
+      const options: InlineConfigOptions = {
+        dockerVolume: ["postgres_data"],
+        localPath: "/backups",
+        stopContainers: true,
+      };
+
+      const config = createConfigFromInlineOptions(options);
+
+      expect(config.docker?.containerStop?.stopContainers).toBe(true);
+    });
+
+    test("creates config with stopContainers disabled via noStopContainers", () => {
+      const options: InlineConfigOptions = {
+        dockerVolume: ["postgres_data"],
+        localPath: "/backups",
+        noStopContainers: true,
+      };
+
+      const config = createConfigFromInlineOptions(options);
+
+      expect(config.docker?.containerStop?.stopContainers).toBe(false);
+    });
+
+    test("creates config with custom stopTimeout", () => {
+      const options: InlineConfigOptions = {
+        dockerVolume: ["postgres_data"],
+        localPath: "/backups",
+        stopContainers: true,
+        stopTimeout: 120,
+      };
+
+      const config = createConfigFromInlineOptions(options);
+
+      expect(config.docker?.containerStop?.stopTimeout).toBe(120);
+    });
+
+    test("creates config with custom restartRetries", () => {
+      const options: InlineConfigOptions = {
+        dockerVolume: ["postgres_data"],
+        localPath: "/backups",
+        stopContainers: true,
+        restartRetries: 10,
+      };
+
+      const config = createConfigFromInlineOptions(options);
+
+      expect(config.docker?.containerStop?.restartRetries).toBe(10);
+    });
+
+    test("creates config with all container stop options", () => {
+      const options: InlineConfigOptions = {
+        dockerVolume: ["postgres_data", "redis_data"],
+        localPath: "/backups",
+        stopContainers: true,
+        stopTimeout: 45,
+        restartRetries: 5,
+      };
+
+      const config = createConfigFromInlineOptions(options);
+
+      expect(config.docker?.enabled).toBe(true);
+      expect(config.docker?.volumes).toHaveLength(2);
+      expect(config.docker?.containerStop?.stopContainers).toBe(true);
+      expect(config.docker?.containerStop?.stopTimeout).toBe(45);
+      expect(config.docker?.containerStop?.restartRetries).toBe(5);
+    });
+
+    test("creates config with container stop options but no Docker volumes using source", () => {
+      const options: InlineConfigOptions = {
+        source: ["/data"],
+        localPath: "/backups",
+        stopContainers: true,
+        stopTimeout: 30,
+      };
+
+      const config = createConfigFromInlineOptions(options);
+
+      // Docker config should be created with container stop options
+      expect(config.docker?.containerStop?.stopContainers).toBe(true);
+      expect(config.docker?.containerStop?.stopTimeout).toBe(30);
     });
   });
 });

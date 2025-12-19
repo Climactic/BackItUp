@@ -1,6 +1,6 @@
 import { describe, expect, mock, test } from "bun:test";
 import type { VolumeBackupResult, VolumeBackupsResult } from "../../src/types/backup";
-import type { DockerConfig, DockerVolumeSource } from "../../src/types/config";
+import type { ContainerStopConfig, DockerConfig, DockerVolumeSource } from "../../src/types/config";
 
 describe("volume backup", () => {
   describe("VolumeBackupResult interface", () => {
@@ -270,5 +270,269 @@ describe("volume backup mocked behavior", () => {
 
     await mockCleanup(results);
     expect(cleanedPaths).toContain("/tmp/vol1.tar.gz");
+  });
+});
+
+describe("ContainerStopConfig", () => {
+  describe("ContainerStopConfig interface", () => {
+    test("full config structure", () => {
+      const config: ContainerStopConfig = {
+        stopContainers: true,
+        stopTimeout: 60,
+        restartRetries: 5,
+        restartRetryDelay: 2000,
+      };
+
+      expect(config.stopContainers).toBe(true);
+      expect(config.stopTimeout).toBe(60);
+      expect(config.restartRetries).toBe(5);
+      expect(config.restartRetryDelay).toBe(2000);
+    });
+
+    test("partial config with defaults", () => {
+      const config: ContainerStopConfig = {
+        stopContainers: true,
+      };
+
+      expect(config.stopContainers).toBe(true);
+      expect(config.stopTimeout).toBeUndefined();
+      expect(config.restartRetries).toBeUndefined();
+      expect(config.restartRetryDelay).toBeUndefined();
+    });
+
+    test("empty config (all defaults)", () => {
+      const config: ContainerStopConfig = {};
+
+      expect(config.stopContainers).toBeUndefined();
+      expect(config.stopTimeout).toBeUndefined();
+    });
+  });
+
+  describe("DockerConfig with containerStop", () => {
+    test("global containerStop config", () => {
+      const config: DockerConfig = {
+        enabled: true,
+        volumes: [{ name: "postgres_data" }],
+        containerStop: {
+          stopContainers: true,
+          stopTimeout: 30,
+        },
+      };
+
+      expect(config.containerStop?.stopContainers).toBe(true);
+      expect(config.containerStop?.stopTimeout).toBe(30);
+    });
+
+    test("docker config without containerStop", () => {
+      const config: DockerConfig = {
+        enabled: true,
+        volumes: [{ name: "postgres_data" }],
+      };
+
+      expect(config.containerStop).toBeUndefined();
+    });
+  });
+
+  describe("DockerVolumeSource with containerStop", () => {
+    test("per-volume containerStop override", () => {
+      const source: DockerVolumeSource = {
+        name: "postgres_data",
+        containerStop: {
+          stopContainers: false,
+          stopTimeout: 60,
+        },
+      };
+
+      expect(source.containerStop?.stopContainers).toBe(false);
+      expect(source.containerStop?.stopTimeout).toBe(60);
+    });
+
+    test("volume source without containerStop (uses global)", () => {
+      const source: DockerVolumeSource = {
+        name: "redis_data",
+      };
+
+      expect(source.containerStop).toBeUndefined();
+    });
+  });
+
+  describe("resolveContainerStopConfig behavior", () => {
+    // Simulates the resolveContainerStopConfig function behavior
+    const DEFAULT_CONFIG = {
+      stopContainers: false,
+      stopTimeout: 30,
+      restartRetries: 3,
+      restartRetryDelay: 1000,
+    };
+
+    function resolveConfig(
+      globalConfig: ContainerStopConfig | undefined,
+      volumeConfig: ContainerStopConfig | undefined,
+    ) {
+      return {
+        stopContainers:
+          volumeConfig?.stopContainers ??
+          globalConfig?.stopContainers ??
+          DEFAULT_CONFIG.stopContainers,
+        stopTimeout:
+          volumeConfig?.stopTimeout ?? globalConfig?.stopTimeout ?? DEFAULT_CONFIG.stopTimeout,
+        restartRetries:
+          volumeConfig?.restartRetries ??
+          globalConfig?.restartRetries ??
+          DEFAULT_CONFIG.restartRetries,
+        restartRetryDelay:
+          volumeConfig?.restartRetryDelay ??
+          globalConfig?.restartRetryDelay ??
+          DEFAULT_CONFIG.restartRetryDelay,
+      };
+    }
+
+    test("uses defaults when no config provided", () => {
+      const resolved = resolveConfig(undefined, undefined);
+
+      expect(resolved.stopContainers).toBe(false);
+      expect(resolved.stopTimeout).toBe(30);
+      expect(resolved.restartRetries).toBe(3);
+      expect(resolved.restartRetryDelay).toBe(1000);
+    });
+
+    test("uses global config when no per-volume config", () => {
+      const globalConfig: ContainerStopConfig = {
+        stopContainers: true,
+        stopTimeout: 60,
+      };
+
+      const resolved = resolveConfig(globalConfig, undefined);
+
+      expect(resolved.stopContainers).toBe(true);
+      expect(resolved.stopTimeout).toBe(60);
+      expect(resolved.restartRetries).toBe(3); // default
+      expect(resolved.restartRetryDelay).toBe(1000); // default
+    });
+
+    test("per-volume config overrides global config", () => {
+      const globalConfig: ContainerStopConfig = {
+        stopContainers: true,
+        stopTimeout: 30,
+        restartRetries: 3,
+      };
+
+      const volumeConfig: ContainerStopConfig = {
+        stopContainers: false,
+        stopTimeout: 60,
+      };
+
+      const resolved = resolveConfig(globalConfig, volumeConfig);
+
+      expect(resolved.stopContainers).toBe(false); // overridden
+      expect(resolved.stopTimeout).toBe(60); // overridden
+      expect(resolved.restartRetries).toBe(3); // from global
+      expect(resolved.restartRetryDelay).toBe(1000); // default
+    });
+
+    test("per-volume config with partial override", () => {
+      const globalConfig: ContainerStopConfig = {
+        stopContainers: true,
+        stopTimeout: 45,
+        restartRetries: 5,
+        restartRetryDelay: 2000,
+      };
+
+      const volumeConfig: ContainerStopConfig = {
+        stopTimeout: 120,
+      };
+
+      const resolved = resolveConfig(globalConfig, volumeConfig);
+
+      expect(resolved.stopContainers).toBe(true); // from global
+      expect(resolved.stopTimeout).toBe(120); // overridden
+      expect(resolved.restartRetries).toBe(5); // from global
+      expect(resolved.restartRetryDelay).toBe(2000); // from global
+    });
+
+    test("explicit false overrides global true", () => {
+      const globalConfig: ContainerStopConfig = {
+        stopContainers: true,
+      };
+
+      const volumeConfig: ContainerStopConfig = {
+        stopContainers: false,
+      };
+
+      const resolved = resolveConfig(globalConfig, volumeConfig);
+
+      expect(resolved.stopContainers).toBe(false);
+    });
+  });
+});
+
+describe("VolumeBackupResult with container stop fields", () => {
+  test("result with stopped containers", () => {
+    const result: VolumeBackupResult = {
+      volumeName: "postgres_data",
+      archivePath: "/tmp/backup.tar.gz",
+      archiveName: "backup.tar.gz",
+      sizeBytes: 1000,
+      checksum: "abc123",
+      wasInUse: true,
+      containersUsingVolume: ["postgres", "pgadmin"],
+      stoppedContainers: ["postgres", "pgadmin"],
+      failedToRestart: undefined,
+      hadAutoRestartWarning: false,
+    };
+
+    expect(result.stoppedContainers).toEqual(["postgres", "pgadmin"]);
+    expect(result.failedToRestart).toBeUndefined();
+    expect(result.hadAutoRestartWarning).toBe(false);
+  });
+
+  test("result with failed restart", () => {
+    const result: VolumeBackupResult = {
+      volumeName: "postgres_data",
+      archivePath: "/tmp/backup.tar.gz",
+      archiveName: "backup.tar.gz",
+      sizeBytes: 1000,
+      checksum: "abc123",
+      wasInUse: true,
+      containersUsingVolume: ["postgres", "pgadmin"],
+      stoppedContainers: ["postgres", "pgadmin"],
+      failedToRestart: ["pgadmin"],
+      hadAutoRestartWarning: false,
+    };
+
+    expect(result.failedToRestart).toEqual(["pgadmin"]);
+  });
+
+  test("result with auto-restart warning", () => {
+    const result: VolumeBackupResult = {
+      volumeName: "postgres_data",
+      archivePath: "/tmp/backup.tar.gz",
+      archiveName: "backup.tar.gz",
+      sizeBytes: 1000,
+      checksum: "abc123",
+      wasInUse: true,
+      containersUsingVolume: ["postgres"],
+      stoppedContainers: ["postgres"],
+      hadAutoRestartWarning: true,
+    };
+
+    expect(result.hadAutoRestartWarning).toBe(true);
+  });
+
+  test("result without container stop (containers were running)", () => {
+    const result: VolumeBackupResult = {
+      volumeName: "postgres_data",
+      archivePath: "/tmp/backup.tar.gz",
+      archiveName: "backup.tar.gz",
+      sizeBytes: 1000,
+      checksum: "abc123",
+      wasInUse: true,
+      containersUsingVolume: ["postgres"],
+      // No stoppedContainers - containers weren't stopped
+    };
+
+    expect(result.stoppedContainers).toBeUndefined();
+    expect(result.failedToRestart).toBeUndefined();
+    expect(result.hadAutoRestartWarning).toBeUndefined();
   });
 });

@@ -231,6 +231,10 @@ Override config file settings directly from the command line. Useful for quick b
 | **Docker**        | `--docker`                     | Enable Docker volume backups                 |
 |                   | `--no-docker`                  | Disable Docker volume backups                |
 |                   | `--docker-volume <name>`       | Docker volume to backup (can be repeated)    |
+|                   | `--stop-containers`            | Stop containers before volume backup         |
+|                   | `--no-stop-containers`         | Don't stop containers (default)              |
+|                   | `--stop-timeout <seconds>`     | Timeout for graceful stop (default: 30)      |
+|                   | `--restart-retries <n>`        | Retry attempts for restart (default: 3)      |
 
 ### Examples
 
@@ -306,6 +310,14 @@ version: "1.0"
 
 docker:
   enabled: true
+
+  # Global container stop settings (optional)
+  containerStop:
+    stopContainers: true      # Stop containers before backup
+    stopTimeout: 30           # Seconds to wait for graceful stop
+    restartRetries: 3         # Retry attempts if restart fails
+    restartRetryDelay: 1000   # Milliseconds between retries
+
   volumes:
     # Direct volume name
     - name: postgres_data
@@ -315,14 +327,42 @@ docker:
       type: compose
       composePath: ./docker-compose.yml
       projectName: myapp  # Optional, inferred from directory
+
+    # Per-volume container stop override
+    - name: redis_data
+      containerStop:
+        stopContainers: false  # Override: don't stop for this volume
 ```
 
 ### How It Works
 
 1. BackItUp uses a temporary Alpine container to create the backup
 2. The volume is mounted read-only to ensure data safety
-3. If a volume is in use by running containers, backup proceeds with a warning
-4. Each volume produces a separate archive: `backitup-volume-{name}-{schedule}-{timestamp}.tar.gz`
+3. If `stopContainers` is enabled:
+   - Containers using the volume are gracefully stopped before backup
+   - After backup completes, containers are automatically restarted
+   - Failed restarts are retried according to `restartRetries` setting
+4. If a volume is in use by running containers without stopping, backup proceeds with a warning
+5. Each volume produces a separate archive: `backitup-volume-{name}-{schedule}-{timestamp}.tar.gz`
+
+### Container Stop/Restart
+
+For data consistency (especially with databases), you can stop containers before backing up their volumes:
+
+```bash
+# Stop containers before backup (CLI)
+backitup backup -s daily --docker-volume postgres_data --stop-containers --local-path /backups
+
+# With custom timeout and retries
+backitup backup -s daily --docker-volume postgres_data \
+  --stop-containers --stop-timeout 60 --restart-retries 5 \
+  --local-path /backups
+```
+
+**Important notes:**
+- Containers with `restart: always` or `restart: unless-stopped` policies may auto-restart after being stopped. BackItUp detects this and logs a warning.
+- If a container fails to restart after all retries, the backup still succeeds but a warning is logged.
+- Per-volume settings override global settings, allowing fine-grained control.
 
 ### Docker Compose Integration
 

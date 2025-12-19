@@ -50,6 +50,10 @@ Override or provide configuration without a config file:
 | `--docker`                     | Enable Docker volume backups                  |
 | `--no-docker`                  | Disable Docker volume backups                 |
 | `--docker-volume <name>`       | Docker volume to backup (repeatable)          |
+| `--stop-containers`            | Stop containers before volume backup          |
+| `--no-stop-containers`         | Don't stop containers (default)               |
+| `--stop-timeout <seconds>`     | Timeout for graceful stop (default: 30)       |
+| `--restart-retries <n>`        | Retry attempts for restart (default: 3)       |
 
 ## Schedules
 
@@ -108,6 +112,34 @@ backitup backup -s manual --skip-volumes
 # Backup specific volumes
 backitup backup -s manual --volume postgres_data --volume redis_data
 ```
+
+### Docker Volume Backups with Container Stop
+
+For data consistency (especially with databases), stop containers before backing up their volumes:
+
+```bash
+# Stop containers, backup, then restart
+backitup backup -s manual --volumes-only --stop-containers
+
+# Inline volume backup with container stop
+backitup backup -s manual \
+  --docker-volume postgres_data \
+  --stop-containers \
+  --local-path /backups
+
+# With custom timeout and retries
+backitup backup -s manual \
+  --docker-volume postgres_data \
+  --stop-containers \
+  --stop-timeout 60 \
+  --restart-retries 5 \
+  --local-path /backups
+```
+
+**Notes:**
+- Containers are automatically restarted after backup completes
+- Containers with `restart: always` policy may auto-restart (a warning is logged)
+- If restart fails after all retries, backup succeeds but a warning is logged
 
 ### Config-Free Mode
 

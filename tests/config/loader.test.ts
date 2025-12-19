@@ -421,6 +421,190 @@ schedules:
       const loaded = await writeAndLoad(config);
       expect(loaded.schedules.daily!.sources).toEqual(["app"]);
     });
+
+    // Docker containerStop validation tests
+    describe("docker containerStop validation", () => {
+      const dockerBaseConfig = {
+        ...validConfig,
+        docker: {
+          enabled: true,
+          volumes: [{ name: "postgres_data" }],
+        },
+      };
+
+      test("accepts valid global containerStop config", async () => {
+        const config = {
+          ...dockerBaseConfig,
+          docker: {
+            ...dockerBaseConfig.docker,
+            containerStop: {
+              stopContainers: true,
+              stopTimeout: 30,
+              restartRetries: 3,
+              restartRetryDelay: 1000,
+            },
+          },
+        };
+        const loaded = await writeAndLoad(config);
+        expect(loaded.docker?.containerStop?.stopContainers).toBe(true);
+        expect(loaded.docker?.containerStop?.stopTimeout).toBe(30);
+      });
+
+      test("accepts partial containerStop config", async () => {
+        const config = {
+          ...dockerBaseConfig,
+          docker: {
+            ...dockerBaseConfig.docker,
+            containerStop: {
+              stopContainers: true,
+            },
+          },
+        };
+        const loaded = await writeAndLoad(config);
+        expect(loaded.docker?.containerStop?.stopContainers).toBe(true);
+        expect(loaded.docker?.containerStop?.stopTimeout).toBeUndefined();
+      });
+
+      test("throws for non-boolean stopContainers", async () => {
+        const config = {
+          ...dockerBaseConfig,
+          docker: {
+            ...dockerBaseConfig.docker,
+            containerStop: {
+              stopContainers: "yes",
+            },
+          },
+        };
+        await expect(writeAndLoad(config)).rejects.toThrow("stopContainers must be a boolean");
+      });
+
+      test("throws for negative stopTimeout", async () => {
+        const config = {
+          ...dockerBaseConfig,
+          docker: {
+            ...dockerBaseConfig.docker,
+            containerStop: {
+              stopTimeout: -1,
+            },
+          },
+        };
+        await expect(writeAndLoad(config)).rejects.toThrow(
+          "stopTimeout must be a non-negative number",
+        );
+      });
+
+      test("throws for non-numeric stopTimeout", async () => {
+        const config = {
+          ...dockerBaseConfig,
+          docker: {
+            ...dockerBaseConfig.docker,
+            containerStop: {
+              stopTimeout: "30",
+            },
+          },
+        };
+        await expect(writeAndLoad(config)).rejects.toThrow(
+          "stopTimeout must be a non-negative number",
+        );
+      });
+
+      test("throws for negative restartRetries", async () => {
+        const config = {
+          ...dockerBaseConfig,
+          docker: {
+            ...dockerBaseConfig.docker,
+            containerStop: {
+              restartRetries: -1,
+            },
+          },
+        };
+        await expect(writeAndLoad(config)).rejects.toThrow(
+          "restartRetries must be a non-negative number",
+        );
+      });
+
+      test("throws for negative restartRetryDelay", async () => {
+        const config = {
+          ...dockerBaseConfig,
+          docker: {
+            ...dockerBaseConfig.docker,
+            containerStop: {
+              restartRetryDelay: -100,
+            },
+          },
+        };
+        await expect(writeAndLoad(config)).rejects.toThrow(
+          "restartRetryDelay must be a non-negative number",
+        );
+      });
+
+      test("accepts per-volume containerStop config", async () => {
+        const config = {
+          ...validConfig,
+          docker: {
+            enabled: true,
+            volumes: [
+              {
+                name: "postgres_data",
+                containerStop: {
+                  stopContainers: true,
+                  stopTimeout: 60,
+                },
+              },
+            ],
+          },
+        };
+        const loaded = await writeAndLoad(config);
+        expect(loaded.docker?.volumes[0]?.containerStop?.stopContainers).toBe(true);
+        expect(loaded.docker?.volumes[0]?.containerStop?.stopTimeout).toBe(60);
+      });
+
+      test("throws for invalid per-volume containerStop", async () => {
+        const config = {
+          ...validConfig,
+          docker: {
+            enabled: true,
+            volumes: [
+              {
+                name: "postgres_data",
+                containerStop: {
+                  stopContainers: "invalid",
+                },
+              },
+            ],
+          },
+        };
+        await expect(writeAndLoad(config)).rejects.toThrow("stopContainers must be a boolean");
+      });
+
+      test("accepts zero for stopTimeout", async () => {
+        const config = {
+          ...dockerBaseConfig,
+          docker: {
+            ...dockerBaseConfig.docker,
+            containerStop: {
+              stopTimeout: 0,
+            },
+          },
+        };
+        const loaded = await writeAndLoad(config);
+        expect(loaded.docker?.containerStop?.stopTimeout).toBe(0);
+      });
+
+      test("accepts zero for restartRetries", async () => {
+        const config = {
+          ...dockerBaseConfig,
+          docker: {
+            ...dockerBaseConfig.docker,
+            containerStop: {
+              restartRetries: 0,
+            },
+          },
+        };
+        const loaded = await writeAndLoad(config);
+        expect(loaded.docker?.containerStop?.restartRetries).toBe(0);
+      });
+    });
   });
 
   describe("findConfigFile", () => {

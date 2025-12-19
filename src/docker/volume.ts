@@ -3,7 +3,13 @@
  */
 
 import { logger } from "../utils/logger";
-import { dockerRun } from "./client";
+import {
+  dockerRun,
+  getContainerRestartPolicy,
+  hasAutoRestartPolicy,
+  startContainerWithRetry,
+  stopContainer,
+} from "./client";
 
 export interface DockerVolume {
   name: string;
@@ -173,4 +179,117 @@ export async function validateVolumes(
   }
 
   return { valid, invalid };
+}
+
+/**
+ * Information about a container that was stopped for backup
+ */
+export interface StoppedContainer {
+  /** Container ID */
+  id: string;
+  /** Container name */
+  name: string;
+  /** Whether the container had an auto-restart policy (always/unless-stopped) */
+  hadAutoRestartPolicy: boolean;
+}
+
+/**
+ * Result of stopping containers for a volume backup
+ */
+export interface StopContainersResult {
+  /** Containers that were successfully stopped */
+  stopped: StoppedContainer[];
+  /** Container names that failed to stop */
+  failed: string[];
+}
+
+/**
+ * Result of restarting containers after a volume backup
+ */
+export interface RestartContainersResult {
+  /** Container names that were successfully restarted */
+  restarted: string[];
+  /** Container names that failed to restart */
+  failed: string[];
+}
+
+/**
+ * Stop all running containers using a volume
+ * @param volumeName - Name of the Docker volume
+ * @param timeout - Timeout in seconds for graceful stop (default: 30)
+ * @returns Result with stopped containers and any failures
+ */
+export async function stopContainersUsingVolume(
+  volumeName: string,
+  timeout: number = 30,
+): Promise<StopContainersResult> {
+  const runningContainers = await getRunningContainersUsingVolume(volumeName);
+
+  if (runningContainers.length === 0) {
+    return { stopped: [], failed: [] };
+  }
+
+  const stopped: StoppedContainer[] = [];
+  const failed: string[] = [];
+
+  for (const container of runningContainers) {
+    // Check restart policy before stopping
+    const restartPolicy = await getContainerRestartPolicy(container.id);
+    const hadAutoRestart = restartPolicy ? hasAutoRestartPolicy(restartPolicy) : false;
+
+    if (hadAutoRestart) {
+      logger.warn(
+        `Container "${container.name}" has restart policy "${restartPolicy}". ` +
+          `It may auto-restart during backup. Consider using "restart: on-failure" or "restart: no".`,
+      );
+    }
+
+    logger.info(`Stopping container "${container.name}" for volume backup...`);
+    const success = await stopContainer(container.id, timeout);
+
+    if (success) {
+      stopped.push({
+        id: container.id,
+        name: container.name,
+        hadAutoRestartPolicy: hadAutoRestart,
+      });
+    } else {
+      failed.push(container.name);
+    }
+  }
+
+  return { stopped, failed };
+}
+
+/**
+ * Restart previously stopped containers
+ * @param containers - List of containers to restart
+ * @param retries - Number of retry attempts per container (default: 3)
+ * @param retryDelay - Delay between retries in ms (default: 1000)
+ * @returns Result with restarted containers and any failures
+ */
+export async function restartContainers(
+  containers: StoppedContainer[],
+  retries: number = 3,
+  retryDelay: number = 1000,
+): Promise<RestartContainersResult> {
+  const restarted: string[] = [];
+  const failed: string[] = [];
+
+  for (const container of containers) {
+    logger.info(`Restarting container "${container.name}"...`);
+    const success = await startContainerWithRetry(container.id, retries, retryDelay);
+
+    if (success) {
+      restarted.push(container.name);
+    } else {
+      failed.push(container.name);
+      logger.warn(
+        `Failed to restart container "${container.name}" after ${retries} attempts. ` +
+          `You may need to start it manually.`,
+      );
+    }
+  }
+
+  return { restarted, failed };
 }

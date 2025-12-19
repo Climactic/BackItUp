@@ -49,6 +49,20 @@ export interface DatabaseConfig {
 }
 
 /**
+ * Container stop/restart configuration for volume backups
+ */
+export interface ContainerStopConfig {
+  /** Whether to stop containers using the volume before backup (default: false) */
+  stopContainers?: boolean;
+  /** Timeout in seconds for graceful stop (default: 30, same as docker stop) */
+  stopTimeout?: number;
+  /** Number of times to retry restarting a container (default: 3) */
+  restartRetries?: number;
+  /** Delay in milliseconds between restart retries (default: 1000) */
+  restartRetryDelay?: number;
+}
+
+/**
  * Docker volume source configuration
  */
 export interface DockerVolumeSource {
@@ -60,6 +74,8 @@ export interface DockerVolumeSource {
   composePath?: string;
   /** Docker Compose project name (optional, inferred from directory if not set) */
   projectName?: string;
+  /** Per-volume container stop settings (overrides global docker.containerStop) */
+  containerStop?: ContainerStopConfig;
 }
 
 /**
@@ -70,6 +86,8 @@ export interface DockerConfig {
   enabled: boolean;
   /** List of volumes to backup */
   volumes: DockerVolumeSource[];
+  /** Global container stop settings (can be overridden per-volume) */
+  containerStop?: ContainerStopConfig;
 }
 
 export interface BackitupConfig {

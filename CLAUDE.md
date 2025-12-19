@@ -90,11 +90,13 @@ Run tests: `bun test`
 ## CI/CD
 
 CI runs on push/PR to main (`.github/workflows/ci.yml`):
+
 1. Type check: `bunx tsc --noEmit`
 2. Lint: `bun run lint`
 3. Test: `bun test`
 
 Release runs on version tags (`.github/workflows/release.yml`):
+
 1. Same checks as CI
 2. Build binaries for linux-x64, linux-arm64, darwin-x64, darwin-arm64, windows-x64
 3. Generate SHA256 checksums
@@ -120,6 +122,7 @@ bun run build:windows-x64  # Windows x64
 - `js-yaml` - YAML config parsing
 
 Dev:
+
 - `oxlint` - Linting
 - `oxfmt` - Formatting
 
@@ -132,6 +135,8 @@ Main config interface is `BackitupConfig` in `src/types/config.ts`:
 - `s3: S3StorageConfig` - S3/R2/MinIO settings
 - `schedules: Record<string, ScheduleConfig>` - Cron schedules with retention
 - `docker?: DockerConfig` - Docker volume backup settings
+  - `containerStop?: ContainerStopConfig` - Global container stop/restart settings
+  - `volumes[].containerStop?: ContainerStopConfig` - Per-volume override
 
 ## Common Tasks
 

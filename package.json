@@ -25,7 +25,7 @@
     "build:all": "bun run build:linux-x64 && bun run build:linux-arm64",
     "test": "bun test",
     "lint": "bunx oxlint --fix",
-    "format": "bunx oxfmt@latest --fix"
+    "format": "bunx oxfmt@latest"
   },
   "dependencies": {
     "@clack/prompts": "^0.11.0",

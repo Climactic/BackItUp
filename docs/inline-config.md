@@ -64,11 +64,15 @@ BackItUp supports passing configuration options directly via command-line flags.
 
 ### Docker
 
-| Option                   | Description                          |
-| ------------------------ | ------------------------------------ |
-| `--docker`               | Enable Docker volume backups         |
-| `--no-docker`            | Disable Docker volume backups        |
-| `--docker-volume <name>` | Docker volume to backup (repeatable) |
+| Option                       | Description                               |
+| ---------------------------- | ----------------------------------------- |
+| `--docker`                   | Enable Docker volume backups              |
+| `--no-docker`                | Disable Docker volume backups             |
+| `--docker-volume <name>`     | Docker volume to backup (repeatable)      |
+| `--stop-containers`          | Stop containers before volume backup      |
+| `--no-stop-containers`       | Don't stop containers (default behavior)  |
+| `--stop-timeout <seconds>`   | Timeout for graceful stop (default: 30)   |
+| `--restart-retries <n>`      | Retry attempts for restart (default: 3)   |
 
 ## Usage Modes
 
@@ -166,6 +170,26 @@ backitup backup -s manual \
 backitup backup -s manual \
   --docker-volume postgres_data \
   --docker-volume redis_data \
+  --local-path /backups
+```
+
+### Docker Volumes with Container Stop
+
+For data consistency (especially with databases), stop containers before backup:
+
+```bash
+# Stop containers before backup, restart after
+backitup backup -s manual \
+  --docker-volume postgres_data \
+  --stop-containers \
+  --local-path /backups
+
+# With custom timeout and retries
+backitup backup -s manual \
+  --docker-volume postgres_data \
+  --stop-containers \
+  --stop-timeout 60 \
+  --restart-retries 5 \
   --local-path /backups
 ```
 

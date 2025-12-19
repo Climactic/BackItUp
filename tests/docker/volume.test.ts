@@ -179,3 +179,239 @@ describe("docker volume mocked behavior", () => {
     expect(running.every((c) => c.state === "running")).toBe(true);
   });
 });
+
+describe("StoppedContainer interface", () => {
+  test("stopped container structure", () => {
+    const stopped = {
+      id: "abc123",
+      name: "my-container",
+      hadAutoRestartPolicy: true,
+    };
+
+    expect(stopped.id).toBe("abc123");
+    expect(stopped.name).toBe("my-container");
+    expect(stopped.hadAutoRestartPolicy).toBe(true);
+  });
+
+  test("stopped container without auto-restart policy", () => {
+    const stopped = {
+      id: "def456",
+      name: "another-container",
+      hadAutoRestartPolicy: false,
+    };
+
+    expect(stopped.hadAutoRestartPolicy).toBe(false);
+  });
+});
+
+describe("StopContainersResult interface", () => {
+  test("successful stop result", () => {
+    const result = {
+      stopped: [
+        { id: "123", name: "container1", hadAutoRestartPolicy: false },
+        { id: "456", name: "container2", hadAutoRestartPolicy: true },
+      ],
+      failed: [],
+    };
+
+    expect(result.stopped).toHaveLength(2);
+    expect(result.failed).toHaveLength(0);
+  });
+
+  test("partial failure stop result", () => {
+    const result = {
+      stopped: [{ id: "123", name: "container1", hadAutoRestartPolicy: false }],
+      failed: ["container2", "container3"],
+    };
+
+    expect(result.stopped).toHaveLength(1);
+    expect(result.failed).toHaveLength(2);
+    expect(result.failed).toContain("container2");
+  });
+
+  test("all failed stop result", () => {
+    const result = {
+      stopped: [],
+      failed: ["container1", "container2"],
+    };
+
+    expect(result.stopped).toHaveLength(0);
+    expect(result.failed).toHaveLength(2);
+  });
+});
+
+describe("RestartContainersResult interface", () => {
+  test("successful restart result", () => {
+    const result = {
+      restarted: ["container1", "container2"],
+      failed: [],
+    };
+
+    expect(result.restarted).toHaveLength(2);
+    expect(result.failed).toHaveLength(0);
+  });
+
+  test("partial failure restart result", () => {
+    const result = {
+      restarted: ["container1"],
+      failed: ["container2"],
+    };
+
+    expect(result.restarted).toHaveLength(1);
+    expect(result.failed).toHaveLength(1);
+  });
+});
+
+describe("stopContainersUsingVolume mocked behavior", () => {
+  test("stops all running containers", async () => {
+    const mockStopContainers = mock((_volumeName: string, _timeout?: number) =>
+      Promise.resolve({
+        stopped: [
+          { id: "123", name: "container1", hadAutoRestartPolicy: false },
+          { id: "456", name: "container2", hadAutoRestartPolicy: false },
+        ],
+        failed: [],
+      }),
+    );
+
+    const result = await mockStopContainers("my-volume", 30);
+    expect(result.stopped).toHaveLength(2);
+    expect(result.failed).toHaveLength(0);
+  });
+
+  test("returns empty when no containers using volume", async () => {
+    const mockStopContainers = mock((_volumeName: string, _timeout?: number) =>
+      Promise.resolve({
+        stopped: [],
+        failed: [],
+      }),
+    );
+
+    const result = await mockStopContainers("unused-volume");
+    expect(result.stopped).toHaveLength(0);
+    expect(result.failed).toHaveLength(0);
+  });
+
+  test("tracks containers with auto-restart policy", async () => {
+    const mockStopContainers = mock((_volumeName: string, _timeout?: number) =>
+      Promise.resolve({
+        stopped: [
+          { id: "123", name: "always-restart", hadAutoRestartPolicy: true },
+          { id: "456", name: "no-restart", hadAutoRestartPolicy: false },
+        ],
+        failed: [],
+      }),
+    );
+
+    const result = await mockStopContainers("my-volume");
+    const withAutoRestart = result.stopped.filter((c) => c.hadAutoRestartPolicy);
+    expect(withAutoRestart).toHaveLength(1);
+    expect(withAutoRestart[0]?.name).toBe("always-restart");
+  });
+
+  test("handles partial failures", async () => {
+    const mockStopContainers = mock((_volumeName: string, _timeout?: number) =>
+      Promise.resolve({
+        stopped: [{ id: "123", name: "container1", hadAutoRestartPolicy: false }],
+        failed: ["container2"],
+      }),
+    );
+
+    const result = await mockStopContainers("my-volume");
+    expect(result.stopped).toHaveLength(1);
+    expect(result.failed).toContain("container2");
+  });
+
+  test("uses custom timeout", async () => {
+    let capturedTimeout: number | undefined;
+    const mockStopContainers = mock((_volumeName: string, timeout: number = 30) => {
+      capturedTimeout = timeout;
+      return Promise.resolve({ stopped: [], failed: [] });
+    });
+
+    await mockStopContainers("my-volume", 60);
+    expect(capturedTimeout).toBe(60);
+  });
+});
+
+describe("restartContainers mocked behavior", () => {
+  test("restarts all containers successfully", async () => {
+    const containers = [
+      { id: "123", name: "container1", hadAutoRestartPolicy: false },
+      { id: "456", name: "container2", hadAutoRestartPolicy: false },
+    ];
+
+    const mockRestart = mock(
+      (_containers: typeof containers, _retries?: number, _retryDelay?: number) =>
+        Promise.resolve({
+          restarted: ["container1", "container2"],
+          failed: [],
+        }),
+    );
+
+    const result = await mockRestart(containers, 3, 1000);
+    expect(result.restarted).toHaveLength(2);
+    expect(result.failed).toHaveLength(0);
+  });
+
+  test("handles partial restart failures", async () => {
+    const containers = [
+      { id: "123", name: "container1", hadAutoRestartPolicy: false },
+      { id: "456", name: "container2", hadAutoRestartPolicy: false },
+    ];
+
+    const mockRestart = mock(
+      (_containers: typeof containers, _retries?: number, _retryDelay?: number) =>
+        Promise.resolve({
+          restarted: ["container1"],
+          failed: ["container2"],
+        }),
+    );
+
+    const result = await mockRestart(containers);
+    expect(result.restarted).toContain("container1");
+    expect(result.failed).toContain("container2");
+  });
+
+  test("uses default retry values", async () => {
+    let capturedRetries: number | undefined;
+    let capturedDelay: number | undefined;
+
+    const mockRestart = mock(
+      (
+        _containers: Array<{ id: string; name: string; hadAutoRestartPolicy: boolean }>,
+        retries: number = 3,
+        retryDelay: number = 1000,
+      ) => {
+        capturedRetries = retries;
+        capturedDelay = retryDelay;
+        return Promise.resolve({ restarted: [], failed: [] });
+      },
+    );
+
+    await mockRestart([]);
+    expect(capturedRetries).toBe(3);
+    expect(capturedDelay).toBe(1000);
+  });
+
+  test("uses custom retry values", async () => {
+    let capturedRetries: number | undefined;
+    let capturedDelay: number | undefined;
+
+    const mockRestart = mock(
+      (
+        _containers: Array<{ id: string; name: string; hadAutoRestartPolicy: boolean }>,
+        retries: number = 3,
+        retryDelay: number = 1000,
+      ) => {
+        capturedRetries = retries;
+        capturedDelay = retryDelay;
+        return Promise.resolve({ restarted: [], failed: [] });
+      },
+    );
+
+    await mockRestart([], 5, 2000);
+    expect(capturedRetries).toBe(5);
+    expect(capturedDelay).toBe(2000);
+  });
+});

@@ -105,12 +105,23 @@ safety:
 # Docker volume backup configuration (optional)
 docker:
   enabled: false
+
+  # Global container stop settings (optional)
+  # Stop containers before backup to ensure data consistency
+  containerStop:
+    stopContainers: false       # Whether to stop containers using the volume
+    stopTimeout: 30             # Seconds to wait for graceful stop
+    restartRetries: 3           # Number of restart attempts if restart fails
+    restartRetryDelay: 1000     # Milliseconds between retry attempts
+
   volumes:
     # Direct volume name
     - name: postgres_data
 
-    # Another volume
+    # Another volume with per-volume container stop override
     - name: redis_data
+      containerStop:
+        stopContainers: true    # Override: stop containers for this volume
 
     # Resolve volume from docker-compose.yml service name
     # - name: db
@@ -213,23 +224,41 @@ Safety features for cleanup operations.
 
 Docker volume backup configuration.
 
-| Field     | Type    | Required | Description                  |
-| --------- | ------- | -------- | ---------------------------- |
-| `enabled` | boolean | Yes      | Enable Docker volume backups |
-| `volumes` | array   | Yes\*    | List of volumes to backup    |
+| Field           | Type    | Required | Description                            |
+| --------------- | ------- | -------- | -------------------------------------- |
+| `enabled`       | boolean | Yes      | Enable Docker volume backups           |
+| `containerStop` | object  | No       | Global container stop/restart settings |
+| `volumes`       | array   | Yes\*    | List of volumes to backup              |
 
 \*Required when enabled.
 
+**Container Stop Settings (`containerStop`):**
+
+| Field               | Type    | Default | Description                               |
+| ------------------- | ------- | ------- | ----------------------------------------- |
+| `stopContainers`    | boolean | `false` | Stop containers before backup             |
+| `stopTimeout`       | number  | `30`    | Seconds to wait for graceful stop         |
+| `restartRetries`    | number  | `3`     | Number of restart attempts if fails       |
+| `restartRetryDelay` | number  | `1000`  | Milliseconds between restart retry        |
+
 **Volume Entry:**
 
-| Field         | Type   | Required | Description                                    |
-| ------------- | ------ | -------- | ---------------------------------------------- |
-| `name`        | string | Yes      | Volume name or Compose service name            |
-| `type`        | string | No       | `"volume"` (default) or `"compose"`            |
-| `composePath` | string | No\*     | Path to docker-compose.yml                     |
-| `projectName` | string | No       | Compose project name (inferred from directory) |
+| Field           | Type   | Required | Description                                    |
+| --------------- | ------ | -------- | ---------------------------------------------- |
+| `name`          | string | Yes      | Volume name or Compose service name            |
+| `type`          | string | No       | `"volume"` (default) or `"compose"`            |
+| `composePath`   | string | No\*     | Path to docker-compose.yml                     |
+| `projectName`   | string | No       | Compose project name (inferred from directory) |
+| `containerStop` | object | No       | Per-volume override of container stop settings |
 
 \*Required when `type: compose`.
+
+**Notes on Container Stop:**
+
+- When `stopContainers` is enabled, BackItUp stops all containers using the volume before backup and restarts them after.
+- Containers with `restart: always` or `restart: unless-stopped` policies may auto-restart after being stopped. BackItUp detects this and logs a warning.
+- Per-volume `containerStop` settings override global settings.
+- If a container fails to restart after all retries, the backup still succeeds but a warning is logged.
 
 ## Minimal Configuration
 

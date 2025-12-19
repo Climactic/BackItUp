@@ -16,6 +16,7 @@ export type {
 export type {
   ArchiveConfig,
   BackitupConfig,
+  ContainerStopConfig,
   DatabaseConfig,
   DockerConfig,
   DockerVolumeSource,
